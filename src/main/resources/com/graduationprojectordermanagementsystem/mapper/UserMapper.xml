@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduationprojectordermanagementsystem.mapper.UserMapper">
+
+    <!-- 根据用户名查询用户DTO -->
+    <select id="getUserByUsername" resultType="com.graduationprojectordermanagementsystem.pojo.dto.UserDTO">
+        SELECT * FROM user WHERE username = #{username}
+    </select>
+
+    <!-- 根据用户名或邮箱查询用户 -->
+    <select id="findOneByUsernameOrEmail" resultType="com.graduationprojectordermanagementsystem.pojo.entity.User">
+        SELECT * FROM user WHERE username = #{username} OR email = #{email}
+    </select>
+
+</mapper>
