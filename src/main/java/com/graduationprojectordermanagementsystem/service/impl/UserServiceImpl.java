@@ -3,6 +3,7 @@ package com.graduationprojectordermanagementsystem.service.impl;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.graduationprojectordermanagementsystem.contents.CommonContent;
+import com.graduationprojectordermanagementsystem.contents.RoleContent;
 import com.graduationprojectordermanagementsystem.contents.StatusContent;
 import com.graduationprojectordermanagementsystem.exception.*;
 import com.graduationprojectordermanagementsystem.mapper.UserMapper;
@@ -11,11 +12,12 @@ import com.graduationprojectordermanagementsystem.pojo.dto.RegisterDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.User;
 import com.graduationprojectordermanagementsystem.service.UserService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     @Resource
@@ -26,33 +28,33 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public User login(LoginDTO loginDTO) {
-        String username = loginDTO.getUsername();
-        String password = loginDTO.getPassword();
-        String email = loginDTO.getEmail();
+        String account = loginDTO.getAccount();
 
-        //1. 根据用户名查询数据库中的数据
-        User user = userMapper.findOneByUsernameOrEmail(username,email);
+
+        //1. 根据用户名查询数据库中的数据（支持用户名或邮箱）
+        User user = userMapper.findOneByUsernameOrEmail(account,account);
 
         //2.处理各种异常情况（用户名不存在、密码不对、账号被禁用）
         if (user == null){
             //用户名或邮箱不存在
             throw new AccountAndEmailNotFoundException(CommonContent.UserAndEmailNotExist);
         }
-
-        if (!BCrypt.checkpw(password, user.getPassword())){
+        // 3. 验证密码
+        if (!BCrypt.checkpw(loginDTO.getPassword(), user.getPassword())){
             //密码错误
             throw new PasswordErrorException(CommonContent.PasswordError);
         }
-
+        // 4. 检查账号状态
         if(user.getStatus().equals(StatusContent.DISABLE)){
             //账号被禁用
             throw new AccountLockedException(CommonContent.AccountLocked);
         }
 
-        //3.更新数据库中的登录时间
+        //5.更新数据库中的登录时间
+        log.info("更新用户最后登录时间");
         userMapper.update(null,new UpdateWrapper<User>()
-                .eq("username",username)
-                .set("last_login_time",new Date()));
+                .eq("id",user.getId())
+                .set("last_login_time", LocalDateTime.now()));
         return user;
     }
 
@@ -77,8 +79,7 @@ public class UserServiceImpl implements UserService {
         newUser.setEmail(registerDTO.getEmail());
         newUser.setPassword(BCrypt.hashpw(registerDTO.getPassword(), BCrypt.gensalt(12)));
         newUser.setPhone(registerDTO.getPhone());
-        newUser.setCreateTime(new Date());
-        newUser.setUpdateTime(new Date());
+        newUser.setRole(RoleContent.USER);
         newUser.setStatus(StatusContent.ENABLE);
         userMapper.insert(newUser);
         return CommonContent.RegisterSuccess;

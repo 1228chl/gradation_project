@@ -7,86 +7,92 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
-
+/**
+ * 简化版 Redis 工具类（不依赖 Spring Security）
+ * 功能：缓存任意对象 + JWT 黑名单管理
+ */
 @Component
 public class RedisUtils {
     private final RedisTemplate<String, Object> redisTemplate;
-    private static final String KEY_PREFIX = "user:auth:";
+    //缓存前缀
+    private static final String CACHE_PREFIX = "app:cache:";
+    //黑名单前缀
+    private static final String BLACKLIST_PREFIX = "app:blacklist:";
 
     @Autowired
     public RedisUtils(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
-    // ==================== 基础操作 ====================
+    // ==================== 通用缓存操作 ====================
     /**
      * 存入信息（带过期时间）
-     * @param username    键
+     * @param key    键
      * @param value  值（支持任意对象）
      */
-    public <T> void setCache(String username, T value) {
-        String key = KEY_PREFIX + username;
+    public <T> void setCache(String key, T value) {
         Long time = JwtContent.EXPIRE_TIME;// 过期时间（单位：秒）和jwt一致
         TimeUnit unit = TimeUnit.SECONDS;// 时间单位(默认为秒)
-        redisTemplate.opsForValue().set(key, value, time, unit);
+        redisTemplate.opsForValue().set(CACHE_PREFIX + key, value, time, unit);
     }
 
     /**
-     * 取出信息（带类型安全检查）
-     * @param username 键
+     * 取出对象（带类型安全检查）
+     * @param key 键
      * @param clazz    目标类型
      * @return         转换后的对象或 null
      */
-    public <T> T getCache(String username, Class<T> clazz) {
-        String key = KEY_PREFIX + username;
-        Object value = redisTemplate.opsForValue().get(key);
-        if (value != null && clazz.isAssignableFrom(value.getClass())) {
+    public <T> T getCache(String key, Class<T> clazz) {
+        Object value = redisTemplate.opsForValue().get(CACHE_PREFIX + key);
+        if (clazz.isInstance(value)) {// 类型检查
             return clazz.cast(value);
         }
         return null;
     }
 
     /**
-     * 删除信息
-     * @param username 键
+     * 删除对象
+     * @param key 键
      */
-    public void deleteCache(String username) {
-        String key = KEY_PREFIX + username;
-        redisTemplate.delete(key);
+    public void deleteCache(String key) {
+        redisTemplate.delete(CACHE_PREFIX + key);
     }
 
     /**
-     * 验证 key 是否存在
+     * 判断缓存是否存在
      */
-    public boolean existsCache(String username) {
-        if (username.startsWith("blacklist:")) {
-            return Boolean.TRUE.equals(redisTemplate.hasKey(username));
-        }
-        String key = KEY_PREFIX + username;
-        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+    public boolean hasCache(String key) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey(CACHE_PREFIX + key));
     }
 
-    // ==================== 黑名单专用 ====================
+    // ==================== JWT 黑名单操作 ====================
     /**
-     * 将 JWT 加入黑名单（自动继承原始 Token 剩余有效期）
+     * 将 JWT 的JTI 加入黑名单（自动设置 Token 剩余有效期）
      * @param jti           JWT的唯一标识（从 Token 解析）
      * @param expireTimeMs  JWT剩余有效时间（秒）
      */
     public void addToBlacklist(String jti, long expireTimeMs) {
         redisTemplate.opsForValue().set(
-                "blacklist:" + jti,
-                "1",
-                expireTimeMs,
-                TimeUnit.SECONDS
+                BLACKLIST_PREFIX + jti,// 带命名空间
+                "invalid",// 值随便填
+                expireTimeMs,// 过期时间
+                TimeUnit.SECONDS// 时间单位
         );
     }
 
     /**
-     * 检查 Token 是否在黑名单中
+     * 检查 JTI 是否在黑名单中
      * @param jti JWT的唯一标识
      */
     public boolean isInBlacklist(String jti) {
-        return existsCache("blacklist:" + jti);
+        return hasCache(BLACKLIST_PREFIX + jti);// 判断缓存是否存在
+    }
+
+    /**
+     * 立即从黑名单移除（可用于管理员强制恢复 Token，一般不用）
+     */
+    public void removeFromBlacklist(String jti){
+        redisTemplate.delete(BLACKLIST_PREFIX + jti);// 删除缓存
     }
 }
 

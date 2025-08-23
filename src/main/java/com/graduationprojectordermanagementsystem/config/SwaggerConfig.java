@@ -30,9 +30,9 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("API文档标题")
+                        .title("毕设接单平台API文档标题")
                         .version("1.0")
-                        .description("接口文档描述")
+                        .description("具体接口文档描述")
                         .license(new License().name("Apache 2.0")));
     }
     @Bean

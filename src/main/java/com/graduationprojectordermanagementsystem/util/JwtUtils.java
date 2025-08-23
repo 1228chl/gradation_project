@@ -3,39 +3,56 @@ package com.graduationprojectordermanagementsystem.util;
 import com.graduationprojectordermanagementsystem.contents.CommonContent;
 import com.graduationprojectordermanagementsystem.contents.JwtContent;
 import com.graduationprojectordermanagementsystem.exception.TokenExpiredException;
-import com.graduationprojectordermanagementsystem.pojo.dto.LoginDTO;
-import com.graduationprojectordermanagementsystem.pojo.vo.LoginVO;
+import com.graduationprojectordermanagementsystem.pojo.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.nio.file.AccessDeniedException;
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 
 @Component
+@Slf4j
 public class JwtUtils {
+
+    private Key signingKey;
+
     @Resource
     private RedisUtils redisUtils;
 
+    /**
+     * 获取签名密钥
+     */
+    private Key getSigningKey() {
+        if (signingKey == null) {
+            byte[] keyBytes = Decoders.BASE64.decode(JwtContent.SECRET);
+            signingKey = Keys.hmacShaKeyFor(keyBytes);
+        }
+        return signingKey;
+    }
 
     /**
      * 生成token
      */
-    public String generateToken(LoginDTO loginDTO) {
+    public String generateToken(User user) {
 
-        String username = loginDTO.getUsername();
+        String username = user.getUsername();
         Date now = new Date();
         Date expiraDate = new Date(now.getTime() + JwtContent.EXPIRE_TIME);
-        UUID uuid = UUID.randomUUID();
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", user.getRole());
 
         return Jwts.builder()
                 .setSubject(username)
-                .setId(uuid.toString())
+                .setClaims(claims)
+                .setId(UUID.randomUUID().toString())//添加唯一标识
                 .setIssuedAt(now)
                 .setExpiration(expiraDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -54,13 +71,17 @@ public class JwtUtils {
                     .parseClaimsJws(token) // 验证签名并解析
                     .getBody();
         } catch (ExpiredJwtException e) {
-            throw new RuntimeException("令牌已过期", e);
+            log.warn("JWT 已过期: {}", token);
+            throw e; // 直接抛出，保留类型
         } catch (MalformedJwtException e) {
-            throw new RuntimeException("令牌格式错误", e);
+            log.warn("JWT 格式错误: {}", token);
+            throw e;
         } catch (JwtException e) {
-            throw new RuntimeException("签名验证失败", e);
+            log.warn("JWT 签名无效或解析失败: {}", token);
+            throw e;
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("令牌参数非法", e);
+            log.error("JWT 参数非法", e);
+            throw e;
         }
     }
 
@@ -68,7 +89,7 @@ public class JwtUtils {
     /**
      * 验证 Token 的完整性和有效性
      */
-    public Boolean validateToken(String token) {
+    public Claims validateToken(String token) {
 
         // 1. 解析并验证JWT
         Claims claims = parseToken(token);
@@ -78,7 +99,7 @@ public class JwtUtils {
 
         // 2. 检查黑名单（基于JWT唯一标识jti）
         String jti = claims.getId();
-        if (redisUtils.isInBlacklist(jti)) { // 带命名空间的键
+        if (jti != null && redisUtils.isInBlacklist(jti)) { // 带命名空间的键
             throw new TokenExpiredException(CommonContent.TokenExpired);
         }
 
@@ -88,7 +109,7 @@ public class JwtUtils {
             throw new ExpiredJwtException(null, claims, "Token已过期");
         }
 
-        return true;
+        return claims;
 
     }
 
@@ -100,13 +121,34 @@ public class JwtUtils {
         return claims.getSubject();
     }
 
+    /**
+     * 获取 JTI（用于登出时加入黑名单）
+     */
+    public String getJtiFromToken(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getId();
+        } catch (JwtException e) {
+            return null;
+        }
+    }
 
     /**
-     * 获取签名密钥
+     * 获取 Token 剩余有效时间（秒）
      */
-    private Key getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(JwtContent.SECRET);
-        return Keys.hmacShaKeyFor(keyBytes);
+    public long getRemainingExpireSeconds(String token) {
+        try {
+            Claims claims = parseToken(token);
+            long remaining = (claims.getExpiration().getTime() - System.currentTimeMillis()) / 1000;
+            return Math.max(0, remaining);
+        } catch (Exception e) {
+            return 0;
+        }
     }
+
 
 }
