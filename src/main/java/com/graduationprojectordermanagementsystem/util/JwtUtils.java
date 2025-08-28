@@ -51,7 +51,7 @@ public class JwtUtils {
 
         return Jwts.builder()
                 .setSubject(username)
-                .setClaims(claims)
+                .addClaims(claims)//添加自定义声明
                 .setId(UUID.randomUUID().toString())//添加唯一标识
                 .setIssuedAt(now)
                 .setExpiration(expiraDate)

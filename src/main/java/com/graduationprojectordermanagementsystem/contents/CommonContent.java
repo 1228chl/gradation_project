@@ -13,6 +13,7 @@ public class CommonContent {
     public static final String UnknownError = "未知错误";//未知错误
     public static final String LoginFailed = "登录失败";//登录失败
     public static final String FileUploadFailed = "文件上传失败";//文件上传失败
+    public static final String FileEmpty = "文件不能为空";//文件不能为空
     public static final String TokenExpired = "Token已过期";//token失效
 
     public static final String PASSWORD_EDIT_FAILED = "密码修改失败";

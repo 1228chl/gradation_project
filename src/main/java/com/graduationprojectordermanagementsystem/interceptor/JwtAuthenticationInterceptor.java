@@ -1,6 +1,7 @@
 package com.graduationprojectordermanagementsystem.interceptor;
 
 import com.graduationprojectordermanagementsystem.util.JwtUtils;
+import com.graduationprojectordermanagementsystem.util.RedisUtils;
 import com.graduationprojectordermanagementsystem.util.UserContext;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -8,15 +9,20 @@ import io.jsonwebtoken.MalformedJwtException;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
+@Slf4j
 public class JwtAuthenticationInterceptor implements HandlerInterceptor {
 
     @Resource
     private JwtUtils jwtUtils;
+
+    @Resource
+    private RedisUtils redisUtils;
 
     // 可以配置不需要认证的路径（如登录、注册）
     private static final String[] EXCLUDE_PATHS = {
@@ -27,6 +33,8 @@ public class JwtAuthenticationInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws Exception {
+        log.info("拦截请求: {}", request.getRequestURI());
+        log.info("Authorization Header: {}", request.getHeader("Authorization"));
         String requestURI = request.getRequestURI();
 
         //1. 检查当前请求是否需要认证
@@ -48,6 +56,15 @@ public class JwtAuthenticationInterceptor implements HandlerInterceptor {
         String token = authHeader.substring(7);//去掉 "Bearer " 前缀
 
         try{
+            // ✅ 先解析 jti（在验证前就可以解析，用于黑名单检查）
+            String jti = jwtUtils.getJtiFromToken(token); // 你需要在 JwtUtils 中实现这个方法
+            if (jti != null) {
+                // ✅ 检查是否在黑名单中
+                if (redisUtils.isInBlacklist(jti)) {
+                    setUnauthorizedResponse(response, "Token已失效，请重新登录");
+                    return false;
+                }
+            }
             //4.验证 Token并获取 Claims
             Claims claims = jwtUtils.validateToken(token);
 

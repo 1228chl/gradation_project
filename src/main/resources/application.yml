@@ -26,6 +26,13 @@ spring:
     url: jdbc:mysql://localhost:3306/graduationproject?useSSL=false&serverTimezone=UTC&characterEncoding=utf8  # 数据库URL
     username: root  # 数据库用户名
     password: 123456  # 数据库密码
+
+  # Spring Boot 文件上传限制（可选）
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 # MyBatis-Plus配置
 mybatis-plus:
   global-config:
@@ -56,3 +63,8 @@ knife4j:
     password: 123456
 
 debug: true
+
+# 文件上传配置
+file:
+  upload-dir: G:/uploads  # Linux 系统路径，Windows 可写 C:/uploads
+

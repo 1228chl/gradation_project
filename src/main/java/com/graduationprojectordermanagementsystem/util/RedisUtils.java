@@ -85,7 +85,7 @@ public class RedisUtils {
      * @param jti JWT的唯一标识
      */
     public boolean isInBlacklist(String jti) {
-        return hasCache(BLACKLIST_PREFIX + jti);// 判断缓存是否存在
+        return Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_PREFIX + jti));// 判断缓存是否存在
     }
 
     /**
