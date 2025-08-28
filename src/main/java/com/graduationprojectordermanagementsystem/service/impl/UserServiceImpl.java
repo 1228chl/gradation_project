@@ -10,6 +10,7 @@ import com.graduationprojectordermanagementsystem.mapper.UserMapper;
 import com.graduationprojectordermanagementsystem.pojo.dto.LoginDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.RegisterDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.User;
+import com.graduationprojectordermanagementsystem.pojo.vo.UserVO;
 import com.graduationprojectordermanagementsystem.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,8 @@ public class UserServiceImpl implements UserService {
 
     @Resource
     private UserMapper userMapper;
+
+
 
     /**
      * 用户登录
@@ -83,5 +86,22 @@ public class UserServiceImpl implements UserService {
         newUser.setStatus(StatusContent.ENABLE);
         userMapper.insert(newUser);
         return CommonContent.RegisterSuccess;
+    }
+
+    /**
+     * 获取当前用户信息
+     */
+    @Override
+    public UserVO getUserInfo(String username) {
+        User user = userMapper.getUserByUsername(username);
+        return new UserVO(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getPhone(),
+//                user.getAvatar(),
+                user.getStatus(),
+                user.getRole(),
+                user.getLastLoginTime());
     }
 }

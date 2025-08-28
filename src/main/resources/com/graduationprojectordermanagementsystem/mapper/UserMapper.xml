@@ -3,7 +3,7 @@
 <mapper namespace="com.graduationprojectordermanagementsystem.mapper.UserMapper">
 
     <!-- 根据用户名查询用户DTO -->
-    <select id="getUserByUsername" resultType="com.graduationprojectordermanagementsystem.pojo.dto.UserDTO">
+    <select id="getUserByUsername" resultType="com.graduationprojectordermanagementsystem.pojo.entity.User">
         SELECT * FROM user WHERE username = #{username}
     </select>
 

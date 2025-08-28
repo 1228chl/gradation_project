@@ -5,6 +5,7 @@ import com.graduationprojectordermanagementsystem.pojo.dto.LoginDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.RegisterDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.User;
 import com.graduationprojectordermanagementsystem.pojo.vo.LoginVO;
+import com.graduationprojectordermanagementsystem.pojo.vo.UserVO;
 import com.graduationprojectordermanagementsystem.result.Result;
 import com.graduationprojectordermanagementsystem.service.UserService;
 import com.graduationprojectordermanagementsystem.util.JwtUtils;
@@ -104,7 +105,18 @@ public class UserController {
             // 解析失败也返回成功，不影响用户体验
         }
 
-
         return Result.success("登出成功");
     }
+
+    /**
+     * 获取当前用户信息
+     */
+    @Operation(summary = "获取当前用户信息")
+    @RequireAnyRole({"user","admin"})
+    @GetMapping("/info/{username}")
+    public Result<UserVO> getUserInfo(@PathVariable String username) {
+        return Result.success(userService.getUserInfo(username));
+    }
+
+
 }
