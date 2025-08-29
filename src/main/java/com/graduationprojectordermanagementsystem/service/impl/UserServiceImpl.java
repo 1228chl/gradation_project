@@ -1,7 +1,9 @@
 package com.graduationprojectordermanagementsystem.service.impl;
 
 import cn.hutool.crypto.digest.BCrypt;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.graduationprojectordermanagementsystem.contents.CommonContent;
 import com.graduationprojectordermanagementsystem.contents.RoleContent;
 import com.graduationprojectordermanagementsystem.contents.StatusContent;
@@ -11,11 +13,15 @@ import com.graduationprojectordermanagementsystem.pojo.dto.LoginDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.RegisterDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.User;
 import com.graduationprojectordermanagementsystem.pojo.vo.UserVO;
+import com.graduationprojectordermanagementsystem.result.PageResult;
 import com.graduationprojectordermanagementsystem.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -104,5 +110,37 @@ public class UserServiceImpl implements UserService {
                 user.getStatus(),
                 user.getRole(),
                 user.getLastLoginTime());
+    }
+
+    /**
+     * 获取用户列表
+     */
+    @Override
+    public PageResult<UserVO> getUserList(Integer pageNum, Integer pageSize) {
+        // 1. 创建 MP 的分页对象
+        Page<User> page = new Page<>(pageNum, pageSize);
+
+        // 2. 执行分页查询（你可以加条件，如状态、用户名等）
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        // 示例：只查启用的用户
+        // wrapper.eq(User::getStatus, StatusContent.ENABLE);
+
+        Page<User> userPage = userMapper.selectPage(page, wrapper);
+
+        // 3. 转换实体为 VO 列表
+        List<UserVO> voList = userPage.getRecords().stream().map(user -> {
+            UserVO vo = new UserVO();
+            BeanUtils.copyProperties(user, vo);
+            // 手动处理 createTime 等字段（如果类型不匹配）
+            return vo;
+        }).toList();
+
+        // 4. 封装并返回 PageResult
+        return PageResult.of(
+                userPage.getTotal(),    // 总数
+                (int) userPage.getCurrent(), // 当前页
+                (int) userPage.getSize(),    // 每页大小
+                voList                   // 数据列表
+        );
     }
 }

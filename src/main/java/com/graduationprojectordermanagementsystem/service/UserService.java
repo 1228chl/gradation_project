@@ -5,6 +5,7 @@ import com.graduationprojectordermanagementsystem.pojo.dto.LoginDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.RegisterDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.User;
 import com.graduationprojectordermanagementsystem.pojo.vo.UserVO;
+import com.graduationprojectordermanagementsystem.result.PageResult;
 
 public interface UserService{
     UserVO getUserInfo(String username);
@@ -12,4 +13,7 @@ public interface UserService{
     User login(LoginDTO loginDTO);
 
     String register(RegisterDTO registerDTO);
+
+
+    PageResult<UserVO> getUserList(Integer pageNum, Integer pageSize);
 }
