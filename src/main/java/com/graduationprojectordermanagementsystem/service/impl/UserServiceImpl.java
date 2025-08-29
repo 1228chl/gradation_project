@@ -19,9 +19,10 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -142,5 +143,48 @@ public class UserServiceImpl implements UserService {
                 (int) userPage.getSize(),    // 每页大小
                 voList                   // 数据列表
         );
+    }
+
+    /**
+     * 删除用户
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class) // 启用事务，异常回滚
+    public Boolean deleteUser(Long id) {
+        log.info("开始删除用户，用户ID：{}", id);
+
+        // 1. 参数校验
+        if (id == null || id <= 0) {
+            log.warn("删除用户失败，非法用户ID：{}", id);
+            throw new IllegalArgumentException("用户ID不能为空且必须大于0");
+        }
+
+        // 2. 检查用户是否存在
+        User user = userMapper.selectById(id);
+        if (user == null) {
+            log.warn("删除用户失败，用户不存在，ID：{}", id);
+            throw new IllegalArgumentException("用户不存在");
+        }
+
+        // 3. 【安全增强】禁止删除超级管理员（可选）
+        if ("admin".equals(user.getRole())) {
+            log.warn("禁止删除超级管理员用户，ID：{}", id);
+            throw new SecurityException("禁止删除超级管理员账号");
+        }
+
+        // 4. 执行物理删除
+        try {
+            int deleteCount = userMapper.deleteById(id);
+            if (deleteCount > 0) {
+                log.info("用户删除成功，ID：{}，用户名：{}", id, user.getUsername());
+                return true;
+            } else {
+                log.error("用户删除失败，数据库未删除任何记录，ID：{}", id);
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("删除用户时发生异常，ID：{}", id, e);
+            throw new RuntimeException("删除用户失败", e);
+        }
     }
 }

@@ -16,4 +16,6 @@ public interface UserService{
 
 
     PageResult<UserVO> getUserList(Integer pageNum, Integer pageSize);
+
+    Boolean deleteUser(Long id);
 }
