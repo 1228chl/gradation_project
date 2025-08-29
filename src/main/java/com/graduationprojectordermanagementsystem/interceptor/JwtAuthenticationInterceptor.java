@@ -71,12 +71,14 @@ public class JwtAuthenticationInterceptor implements HandlerInterceptor {
             //5.提取用户信息，存入上下文中
             String username = claims.getSubject();
             String role = claims.get("role", String.class);//获取角色
+            Integer userId = claims.get("userId", Integer.class);
             if (username == null && role == null){
                 setUnauthorizedResponse(response, "Token中缺少必要信息");
                 return false;
             }
             UserContext.setUsername(username);//存入当前线程上下文
             UserContext.setRole(role);
+            UserContext.setUserId(userId);
 
             // 6. 可选：将用户ID等信息也存入
             // UserContext.setUserId(...); // 如果 Claims 中有额外信息

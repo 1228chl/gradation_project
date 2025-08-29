@@ -8,11 +8,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "user订单接口")
-@RestController
+@RestController("userOrderController")
 @RequestMapping("/api/user/order")
 @Slf4j
 public class OrderController {
@@ -21,7 +22,7 @@ public class OrderController {
 
     @Operation(summary = "添加订单")
     @PostMapping("/add")
-    public Result<String> addOrder(OrderDTO orderDTO) {
+    public Result<String> addOrder(@RequestBody OrderDTO orderDTO) {
         log.info("添加订单");
         if (orderService.addOrder(orderDTO)){
             log.info("订单添加成功");

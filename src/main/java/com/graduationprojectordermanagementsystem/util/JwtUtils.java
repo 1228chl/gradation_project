@@ -48,6 +48,7 @@ public class JwtUtils {
         Date expiraDate = new Date(now.getTime() + JwtContent.EXPIRE_TIME);
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRole());
+        claims.put("userId", user.getId());
 
         return Jwts.builder()
                 .setSubject(username)

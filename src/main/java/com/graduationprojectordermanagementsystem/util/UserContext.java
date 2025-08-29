@@ -7,6 +7,7 @@ public class UserContext {
 
     private static final ThreadLocal<String> usernameHolder = new ThreadLocal<>();
     private static final ThreadLocal<String> roleHolder = new ThreadLocal<>();
+    private static final ThreadLocal<Integer> userIdHolder = new ThreadLocal<>();
 
     // 设置用户名
     public static void setUsername(String username) {
@@ -28,9 +29,18 @@ public class UserContext {
         return roleHolder.get();
     }
 
+    // 设置用户id
+    public static void setUserId(Integer userId) {userIdHolder.set(userId);}
+
+    // 获取用户id
+    public static Integer getUserId() {return userIdHolder.get();}
+
     // 清除用户名
     public static void clear() {
         usernameHolder.remove();
         roleHolder.remove();
+        userIdHolder.remove();
     }
+
+
 }
