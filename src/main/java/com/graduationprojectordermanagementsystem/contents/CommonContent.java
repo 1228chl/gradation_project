@@ -15,6 +15,7 @@ public class CommonContent {
     public static final String FileUploadFailed = "文件上传失败";//文件上传失败
     public static final String FileEmpty = "文件不能为空";//文件不能为空
     public static final String TokenExpired = "Token已过期";//token失效
+    public static final String DefaultAvatar = "G:file/avatar/defaultAvatar.jpg";//默认头像
 
     public static final String PASSWORD_EDIT_FAILED = "密码修改失败";
     public static final String ORDER_STATUS_ERROR = "订单状态错误";

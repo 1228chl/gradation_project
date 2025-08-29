@@ -66,5 +66,6 @@ debug: true
 
 # 文件上传配置
 file:
-  upload-dir: G:/uploads  # Linux 系统路径，Windows 可写 C:/uploads
+  upload-dir: G:file/uploads  # Linux 系统路径，Windows 可写 C:/uploads
+  upload-avatar-dir: G:file/avatar
 

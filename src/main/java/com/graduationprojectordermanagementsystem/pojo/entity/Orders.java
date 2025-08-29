@@ -8,18 +8,17 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("upload_file")
-public class UploadFile implements Serializable {
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;//文件id
-    private String Username;//文件上传者
-    private String fileName;//文件名
-    private String fileUrl;//文件url
-    private String filePath;//文件路径
-    private String fileType;//文件类型
-    private Long fileSize;//文件大小(字节)
-    private Integer fileOrAvatar;//文件类型 0-文件 1-头像
-
+@TableName("orders")
+public class Orders implements Serializable {
+    @TableId(value = "id", type = IdType.ASSIGN_ID)//雪花算法
+    private Long id;//订单id
+    private String orderNumber;//订单编号
+    private Long userId;//下单用户id
+    private Long majorId;//需求专业id
+    private Double price;// 价格
+    private String title;//订单标题
+    private String demand;//需求描述
+    private Integer status;//状态:0-待支付,1-已支付,2-已完成,3-已取消
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;//创建时间
     @TableField(fill = FieldFill.INSERT_UPDATE)

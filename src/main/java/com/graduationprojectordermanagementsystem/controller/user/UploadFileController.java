@@ -10,8 +10,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Tag(name = "文件接口")
 @RestController
@@ -43,4 +50,29 @@ public class UploadFileController {
             return Result.error(CommonContent.FileUploadFailed);//文件上传失败
         }
     }
+
+    /**
+     * 头像上传
+     */
+    @RequireAnyRole({"user","admin"})
+    @PostMapping("/upload/avatar")
+    @Operation(summary = "头像上传")
+    public Result<UploadFileVO> uploadAvatar(MultipartFile file) {
+        try {
+            UploadFile uploadFile = uploadFileService.uploadAvatar(file);
+            UploadFileVO uploadFileVO = new UploadFileVO(
+                    uploadFile.getId(),
+                    uploadFile.getFileName(),
+                    uploadFile.getFilePath(),
+                    uploadFile.getFileType(),
+                    uploadFile.getFileSize());
+
+            return Result.success(uploadFileVO);
+        }catch (Exception e){
+            log.error("头像上传失败",e);
+            return Result.error(CommonContent.FileUploadFailed);//文件上传失败
+        }
+    }
+
+
 }

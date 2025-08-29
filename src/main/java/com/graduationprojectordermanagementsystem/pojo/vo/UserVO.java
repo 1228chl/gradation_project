@@ -15,7 +15,7 @@ public class UserVO implements Serializable {
     private String username;//用户名
     private String email;//邮箱
     private String phone;//手机号
-//    private String avatar;//头像
+    private String avatar;//头像
     private Integer status;//状态
     private String role;//角色
     private LocalDateTime lastLoginTime;//最后登录时间

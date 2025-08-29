@@ -8,4 +8,6 @@ import java.io.IOException;
 
 public interface UploadFileService {
     UploadFile uploadFile(MultipartFile file) throws IOException;
+
+    UploadFile uploadAvatar(MultipartFile file) throws IOException;
 }

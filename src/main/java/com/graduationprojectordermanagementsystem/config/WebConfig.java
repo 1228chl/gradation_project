@@ -27,9 +27,11 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-        converters.add(new MappingJackson2HttpMessageConverter());
+    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+        // ✅ 在默认转换器基础上“追加”
         converters.add(new StringHttpMessageConverter(StandardCharsets.UTF_8));
+        // ⚠️ 不要手动添加 MappingJackson2HttpMessageConverter
+        // Spring Boot 已经注册了一个配置完善的 Jackson 转换器
     }
 
     @Override

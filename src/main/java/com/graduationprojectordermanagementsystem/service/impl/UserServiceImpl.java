@@ -84,6 +84,7 @@ public class UserServiceImpl implements UserService {
         newUser.setPhone(registerDTO.getPhone());
         newUser.setRole(RoleContent.USER);
         newUser.setStatus(StatusContent.ENABLE);
+        newUser.setAvatar(CommonContent.DefaultAvatar);
         userMapper.insert(newUser);
         return CommonContent.RegisterSuccess;
     }
@@ -99,7 +100,7 @@ public class UserServiceImpl implements UserService {
                 user.getUsername(),
                 user.getEmail(),
                 user.getPhone(),
-//                user.getAvatar(),
+                user.getAvatar(),
                 user.getStatus(),
                 user.getRole(),
                 user.getLastLoginTime());
