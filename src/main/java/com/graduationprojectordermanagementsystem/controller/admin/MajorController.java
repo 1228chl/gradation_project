@@ -25,7 +25,7 @@ public class MajorController {
      */
     @Operation(summary = "添加专业")
     @RequireAnyRole({"admin"})
-    @PostMapping("/add")
+    @PostMapping
     public Result<String> addMajor(@RequestBody MajorDTO majorDTO){
         if (majorService.addMajor(majorDTO)){
             log.info("添加专业成功");
@@ -53,7 +53,7 @@ public class MajorController {
      */
     @Operation(summary = "删除专业")
     @RequireAnyRole({"admin"})
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public Result<String> deleteMajor(@PathVariable("id") Long id){
         if (majorService.deleteMajor(id)){
             log.info("删除专业成功");

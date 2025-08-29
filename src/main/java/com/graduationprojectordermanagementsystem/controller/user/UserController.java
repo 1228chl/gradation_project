@@ -18,7 +18,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 @Tag(name = "用户接口")
-@RestController
+@RestController("userUserController")
 @RequestMapping("/api/user")
 @Slf4j
 public class UserController {
@@ -113,7 +113,7 @@ public class UserController {
      */
     @Operation(summary = "获取当前用户信息")
     @RequireAnyRole({"user","admin"})
-    @GetMapping("/info/{username}")
+    @GetMapping("/{username}")
     public Result<UserVO> getUserInfo(@PathVariable String username) {
         return Result.success(userService.getUserInfo(username));
     }
