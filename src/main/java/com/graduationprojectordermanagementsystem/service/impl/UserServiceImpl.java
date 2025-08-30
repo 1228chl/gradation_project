@@ -4,6 +4,7 @@ import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.graduationprojectordermanagementsystem.contents.CommonContent;
 import com.graduationprojectordermanagementsystem.contents.RoleContent;
 import com.graduationprojectordermanagementsystem.contents.StatusContent;
@@ -11,6 +12,7 @@ import com.graduationprojectordermanagementsystem.exception.*;
 import com.graduationprojectordermanagementsystem.mapper.UserMapper;
 import com.graduationprojectordermanagementsystem.pojo.dto.LoginDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.RegisterDTO;
+import com.graduationprojectordermanagementsystem.pojo.dto.UserDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.User;
 import com.graduationprojectordermanagementsystem.pojo.vo.UserVO;
 import com.graduationprojectordermanagementsystem.result.PageResult;
@@ -150,7 +152,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class) // 启用事务，异常回滚
-    public Boolean deleteUser(Long id) {
+    public boolean deleteUser(Long id) {
         log.info("开始删除用户，用户ID：{}", id);
 
         // 1. 参数校验
@@ -186,5 +188,63 @@ public class UserServiceImpl implements UserService {
             log.error("删除用户时发生异常，ID：{}", id, e);
             throw new RuntimeException("删除用户失败", e);
         }
+    }
+
+    @Override
+    public boolean updateUser(UserDTO userDTO) {
+        log.info("开始修改用户信息：{}", userDTO);
+        // 1. 校验参数
+        if (userDTO == null || userDTO.getId() == null || userDTO.getId() <= 0) {
+            log.warn("更新用户失败，用户ID无效：{}", userDTO);
+            throw new IllegalArgumentException("用户ID不能为空且必须大于0");
+        }
+
+        // 2. 查询原用户是否存在
+        User existingUser = userMapper.selectById(userDTO.getId());
+        if (existingUser == null) {
+            log.warn("更新用户失败，用户不存在，ID：{}", userDTO.getId());
+            throw new IllegalArgumentException("用户不存在");
+        }
+
+        // 3. 构建要更新的 User 实体（只设置非 null 字段）
+        User user = new User();
+        user.setId(userDTO.getId()); // 主键用于 WHERE 条件
+
+        // 普通字段直接复制
+        if (userDTO.getUsername() != null) {
+            user.setUsername(userDTO.getUsername());
+        }
+        if (userDTO.getEmail() != null) {
+            user.setEmail(userDTO.getEmail());
+        }
+        if (userDTO.getPhone() != null) {
+            user.setPhone(userDTO.getPhone());
+        }
+        if (userDTO.getAvatar() != null) {
+            user.setAvatar(userDTO.getAvatar());
+        }
+        if (userDTO.getStatus() != null) {
+            user.setStatus(userDTO.getStatus());
+        }
+        if (userDTO.getRole() != null) {
+            user.setRole(userDTO.getRole());
+        }
+
+        // 🔐 密码特殊处理：如果传了新密码，才加密并设置
+        if (userDTO.getPassword() != null && !userDTO.getPassword().trim().isEmpty()) {
+            user.setPassword(BCrypt.hashpw(userDTO.getPassword(), BCrypt.gensalt(12)));
+            log.info("密码已加密，用户ID：{}", userDTO.getId());
+        }
+
+        // 4. 执行更新
+        int updateResult = userMapper.updateById(user);
+
+        if (updateResult > 0) {
+            log.info("用户更新成功，ID：{}", userDTO.getId());
+        } else {
+            log.error("用户更新失败，但无异常，ID：{}", userDTO.getId());
+        }
+
+        return updateResult > 0;
     }
 }

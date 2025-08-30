@@ -1,6 +1,7 @@
 package com.graduationprojectordermanagementsystem.controller.admin;
 
 import com.graduationprojectordermanagementsystem.annotation.RequireAnyRole;
+import com.graduationprojectordermanagementsystem.pojo.dto.UserDTO;
 import com.graduationprojectordermanagementsystem.pojo.vo.UserVO;
 import com.graduationprojectordermanagementsystem.result.PageResult;
 import com.graduationprojectordermanagementsystem.result.Result;
@@ -40,6 +41,17 @@ public class UserController {
             return Result.success("删除用户成功");
         }
         return Result.error("删除失败");
+    }
+
+    @Operation(summary = "修改用户信息")
+    @PutMapping
+    @RequireAnyRole({"admin"})
+    public Result<String> updateUser(@RequestBody UserDTO userDTO){
+        log.info("修改用户信息：{}", userDTO);
+        if (userService.updateUser(userDTO)){
+            return Result.success("修改用户信息成功");
+        }
+        return Result.error("修改用户信息失败");
     }
 
 
