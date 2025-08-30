@@ -3,6 +3,7 @@ package com.graduationprojectordermanagementsystem.controller.user;
 import com.graduationprojectordermanagementsystem.annotation.RequireAnyRole;
 import com.graduationprojectordermanagementsystem.pojo.dto.OrderDTO;
 import com.graduationprojectordermanagementsystem.pojo.vo.OrderVO;
+import com.graduationprojectordermanagementsystem.result.PageResult;
 import com.graduationprojectordermanagementsystem.result.Result;
 import com.graduationprojectordermanagementsystem.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,11 +12,10 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @Tag(name = "user订单接口")
 @RestController("userOrderController")
-@RequestMapping("/api/user/orders")
+@RequestMapping("/api/user/order")
 @Slf4j
 public class OrderController {
     @Resource
@@ -39,9 +39,11 @@ public class OrderController {
     @Operation(summary = "查询用户订单")
     @RequireAnyRole({"user","admin"})
     @GetMapping("/{id}")
-    public Result<List<OrderVO>> getOrderById(@PathVariable("id") Long id) {
+    public Result<PageResult<OrderVO>> getOrderById(@PathVariable("id") Long id,
+                                                    @RequestParam(defaultValue = "1") Integer pageNum,
+                                                    @RequestParam(defaultValue = "10") Integer pageSize) {
         log.info("查询用户订单");
-        List<OrderVO> orderVO = orderService.getOrderById(id);
+        PageResult<OrderVO> orderVO = orderService.getOrdersByUserId(id, pageNum, pageSize);
         if (orderVO != null){
             log.info("查询用户订单成功");
             return Result.success(orderVO);

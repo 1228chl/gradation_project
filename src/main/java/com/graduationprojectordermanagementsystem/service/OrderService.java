@@ -2,11 +2,17 @@ package com.graduationprojectordermanagementsystem.service;
 
 import com.graduationprojectordermanagementsystem.pojo.dto.OrderDTO;
 import com.graduationprojectordermanagementsystem.pojo.vo.OrderVO;
+import com.graduationprojectordermanagementsystem.result.PageResult;
 
-import java.util.List;
 
 public interface OrderService {
     Boolean addOrder(OrderDTO orderDTO);
 
-    List<OrderVO> getOrderById(Long id);
+    PageResult<OrderVO> getOrderList(Integer pageNum, Integer pageSize);
+
+    PageResult<OrderVO> getOrdersByUserId(Long id, Integer pageNum, Integer pageSize);
+
+    boolean updateOrder(OrderDTO orderDTO);
+
+    boolean deleteOrder(Long id);
 }
