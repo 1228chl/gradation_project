@@ -58,7 +58,7 @@ knife4j:
   enable: true
   setting:
     language: zh_cn
-  production: true  # 生产环境设为true需登录
+  production: false  # 生产环境设为true需登录
   basic:
     enable: true     # 开启基础认证
     username: xunzong

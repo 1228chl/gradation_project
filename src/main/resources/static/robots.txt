@@ -1,0 +1,5 @@
+# robots.txt
+# 禁止所有爬虫访问本网站
+
+User-agent: *
+Disallow: /

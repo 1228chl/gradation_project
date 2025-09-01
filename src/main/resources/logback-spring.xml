@@ -44,7 +44,7 @@
                 <!-- 最多保留30天的历史日志 -->
                 <maxHistory>30</maxHistory>
                 <!-- 日志总大小不超过1GB -->
-                <totalSizeCap>1GB</totalSizeCap>
+                <totalSizeCap>3GB</totalSizeCap>
                 <!-- 启动时清理过期日志 -->
                 <cleanHistoryOnStart>true</cleanHistoryOnStart>
             </rollingPolicy>
