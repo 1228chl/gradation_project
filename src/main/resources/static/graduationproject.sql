@@ -52,6 +52,7 @@ CREATE TABLE `orders`  (
   `price` decimal(10, 2) NOT NULL,
   `title` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `demand` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `status` int NOT NULL,
   `create_time` datetime NULL DEFAULT NULL,
   `update_time` datetime NULL DEFAULT NULL,
@@ -61,9 +62,9 @@ CREATE TABLE `orders`  (
 -- ----------------------------
 -- Records of orders
 -- ----------------------------
-INSERT INTO `orders` VALUES (1961392725710376961, '4-2-1756467441340-831', 2, 4, 456.35, '整甜许多哼代表摔一同', 'id cillum', 0, '2025-08-29 19:37:21', '2025-08-29 19:37:21');
-INSERT INTO `orders` VALUES (1961401168936599554, '70-2-1756469454350-127', 2, 4, 286.69, '吸捣没好在生动油门但是全哎出生', 'laboris nostrud', 3, '2025-08-29 20:10:54', '2025-08-30 14:10:10');
-INSERT INTO `orders` VALUES (1961675481640108033, '70-2-1756534855594-653', 2, 70, 114.89, '雪崩慢太自从哇塞倒清楚像相当呸', 'ut Lorem in laborum', 0, '2025-08-30 14:20:56', '2025-08-30 14:20:56');
+INSERT INTO `orders` VALUES (1961392725710376961, '4-2-1756467441340-831', 2, 4, 456.35, '整甜许多哼代表摔一同', 'id cillum', '',0, '2025-08-29 19:37:21', '2025-08-29 19:37:21');
+INSERT INTO `orders` VALUES (1961401168936599554, '70-2-1756469454350-127', 2, 4, 286.69, '吸捣没好在生动油门但是全哎出生', 'laboris nostrud', '', 3, '2025-08-29 20:10:54', '2025-08-30 14:10:10');
+INSERT INTO `orders` VALUES (1961675481640108033, '70-2-1756534855594-653', 2, 70, 114.89, '雪崩慢太自从哇塞倒清楚像相当呸', 'ut Lorem in laborum', '', 0, '2025-08-30 14:20:56', '2025-08-30 14:20:56');
 
 -- ----------------------------
 -- Table structure for upload_file

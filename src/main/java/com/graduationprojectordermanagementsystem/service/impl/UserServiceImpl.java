@@ -4,18 +4,23 @@ import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.graduationprojectordermanagementsystem.contents.CommonContent;
 import com.graduationprojectordermanagementsystem.contents.RoleContent;
 import com.graduationprojectordermanagementsystem.contents.StatusContent;
 import com.graduationprojectordermanagementsystem.exception.*;
+import com.graduationprojectordermanagementsystem.mapper.MajorMapper;
+import com.graduationprojectordermanagementsystem.mapper.UserMajorMapper;
 import com.graduationprojectordermanagementsystem.mapper.UserMapper;
 import com.graduationprojectordermanagementsystem.pojo.dto.LoginDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.RegisterDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.UserDTO;
+import com.graduationprojectordermanagementsystem.pojo.entity.Major;
 import com.graduationprojectordermanagementsystem.pojo.entity.User;
+import com.graduationprojectordermanagementsystem.pojo.entity.UserMajor;
+import com.graduationprojectordermanagementsystem.pojo.vo.UserMajorVO;
 import com.graduationprojectordermanagementsystem.pojo.vo.UserVO;
 import com.graduationprojectordermanagementsystem.result.PageResult;
+import com.graduationprojectordermanagementsystem.result.Result;
 import com.graduationprojectordermanagementsystem.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -32,6 +38,10 @@ public class UserServiceImpl implements UserService {
 
     @Resource
     private UserMapper userMapper;
+    @Resource
+    private UserMajorMapper userMajorMapper;
+    @Resource
+    private MajorMapper majorMapper;
 
 
 
@@ -247,4 +257,131 @@ public class UserServiceImpl implements UserService {
 
         return updateResult > 0;
     }
+
+    /**
+     * 添加我喜欢功能
+     */
+    @Override
+    public Result<String> addUserMajor(Long userId, Long majorId){
+        log.info("添加我喜欢功能，用户id {}，专业id {}", userId, majorId);
+
+        // 参数校验
+        if (userId == null || majorId == null) {
+            return Result.error("用户ID或专业ID不能为空");
+        }
+
+        // 查询用户是否存在（防止攻击）
+        LambdaQueryWrapper<User> queryWrapperUser = new LambdaQueryWrapper<>();
+        queryWrapperUser.eq(User::getId, userId);
+        if (userMapper.selectOne(queryWrapperUser) == null) {
+            return Result.error("用户不存在");
+        }
+        // 验证专业是否存在（防止攻击）
+        LambdaQueryWrapper<Major> queryWrapperMajor = new LambdaQueryWrapper<>();
+        queryWrapperMajor.eq(Major::getId, majorId);
+        if (majorMapper.selectOne(queryWrapperMajor) == null) {
+            return Result.error("专业不存在");
+        }
+
+        // 查询是否已存在（防止重复添加）
+        LambdaQueryWrapper<UserMajor> queryWrapperUserMajor = new LambdaQueryWrapper<>();
+        queryWrapperUserMajor.eq(UserMajor::getUserId, userId)
+                .eq(UserMajor::getMajorId, majorId);
+
+        if (userMajorMapper.selectCount(queryWrapperUserMajor) > 0) {
+            return Result.error("该专业已添加至“我喜欢”，请勿重复添加");
+        }
+
+        // 构建实体类保存
+        UserMajor userMajor = new UserMajor();
+        userMajor.setUserId(userId);
+        userMajor.setMajorId(majorId);
+        // createTime 由 MyBatis-Plus 自动填充（@TableField(fill = FieldFill.INSERT)）
+
+        int save = userMajorMapper.insert(userMajor);
+        if (save>0) {
+            return Result.success("已成功添加至“我喜欢”");
+        } else {
+            return Result.error("添加失败，请重试");
+        }
+    }
+
+    /**
+     * 我喜欢功能(取消)
+     */
+    @Override
+    public Result<String> deleteUserMajor(Long userId, Long majorId) {
+        log.info("取消我喜欢功能，用户id {}，专业id {}", userId, majorId);
+        if (majorId == null) {
+            return Result.error("专业ID不能为空");
+        }
+        // 查询用户是否存在（防止攻击）
+        LambdaQueryWrapper<User> queryWrapperUser = new LambdaQueryWrapper<>();
+        queryWrapperUser.eq(User::getId, userId);
+        if (userMapper.selectOne(queryWrapperUser) == null) {
+            return Result.error("用户不存在");
+        }
+        // 验证专业是否存在（防止攻击）
+        LambdaQueryWrapper<Major> queryWrapperMajor = new LambdaQueryWrapper<>();
+        queryWrapperMajor.eq(Major::getId, majorId);
+        if (majorMapper.selectOne(queryWrapperMajor) == null) {
+            return Result.error("专业不存在");
+        }
+        // 查询是否不存在（防止重复添加）
+        LambdaQueryWrapper<UserMajor> queryWrapperUserMajor = new LambdaQueryWrapper<>();
+        queryWrapperUserMajor.eq(UserMajor::getUserId, userId)
+                .eq(UserMajor::getMajorId, majorId);
+
+        if (userMajorMapper.selectCount(queryWrapperUserMajor) == 0) {
+            return Result.error("已取消“我喜欢”，请勿重复取消");
+        }
+
+        int save = userMajorMapper.delete(queryWrapperUserMajor);
+        if (save>0) {
+            return Result.success("已成功取消“我喜欢”");
+        } else {
+            return Result.error("取消失败，请重试");
+        }
+    }
+
+    /**
+     * 我喜欢 列表
+     */
+    @Override
+    public Result<List<UserMajorVO>> getLikeMajorList(Long userId) {
+        log.info("通过用户ID查询我喜欢列表，用户id: {}", userId);
+
+        // 1. 可选：验证用户是否存在
+        LambdaQueryWrapper<User> userWrapper = new LambdaQueryWrapper<>();
+        userWrapper.eq(User::getId, userId);
+        if (userMapper.selectOne(userWrapper) == null) {
+            return Result.error("用户不存在");
+        }
+
+        // 2. 查询用户喜欢的专业关联记录
+        LambdaQueryWrapper<UserMajor> wrapper = new LambdaQueryWrapper<>();
+
+        // 直接查询 user_major 表，只取 major_id 和 create_time
+        wrapper.select(UserMajor::getMajorId, UserMajor::getCreateTime) // 只查需要的字段
+                .eq(UserMajor::getUserId, userId)
+                .orderByDesc(UserMajor::getCreateTime);
+
+        List<UserMajor> list = userMajorMapper.selectList(wrapper);
+
+        // 转换为 VO
+        List<UserMajorVO> voList = list.stream().map(um -> {
+            UserMajorVO vo = new UserMajorVO();
+            vo.setMajorId(um.getMajorId());
+            vo.setCreateTime(um.getCreateTime()); // 假设 createTime 是 Date 或 Timestamp
+            return vo;
+        }).collect(Collectors.toList());
+
+        if (voList.isEmpty()) {
+            log.info("用户 {} 没有添加任何我喜欢的专业", userId);
+            return Result.success(voList);
+        }
+        log.info("用户 {} 共有 {} 条我喜欢记录", userId, voList.size());
+        return Result.success(voList);
+    }
+
 }

@@ -5,6 +5,7 @@ import com.graduationprojectordermanagementsystem.pojo.dto.LoginDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.RegisterDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.User;
 import com.graduationprojectordermanagementsystem.pojo.vo.LoginVO;
+import com.graduationprojectordermanagementsystem.pojo.vo.UserMajorVO;
 import com.graduationprojectordermanagementsystem.pojo.vo.UserVO;
 import com.graduationprojectordermanagementsystem.result.Result;
 import com.graduationprojectordermanagementsystem.service.UserService;
@@ -17,6 +18,9 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 @Tag(name = "用户接口")
 @RestController("userUserController")
 @RequestMapping("/api/user")
@@ -116,6 +120,39 @@ public class UserController {
     @GetMapping("/{username}")
     public Result<UserVO> getUserInfo(@PathVariable String username) {
         return Result.success(userService.getUserInfo(username));
+    }
+
+    /**
+     * 我喜欢功能(添加)
+     */
+    @Operation(summary = "我喜欢功能(添加)")
+    @RequireAnyRole({"user","admin"})
+    @PostMapping("/like/{majorId}")
+    public Result<String> like(@PathVariable Long majorId){
+        Long userId = UserContext.getUserId();
+        return userService.addUserMajor(userId,majorId);
+    }
+
+    /**
+     * 我喜欢功能(取消)
+     */
+    @Operation(summary = "我喜欢功能(取消)")
+    @RequireAnyRole({"user","admin"})
+    @DeleteMapping("/like/{majorId}")
+    public Result<String> unlike(@PathVariable Long majorId){
+        Long userId = UserContext.getUserId();
+        return userService.deleteUserMajor(userId,majorId);
+    }
+
+    /**
+     * 通过用户ID查询‘我喜欢’的专业列表
+     */
+    @Operation(summary = "通过用户ID查询‘我喜欢’的专业列表")
+    @RequireAnyRole({"user", "admin"})
+    @GetMapping("/like")
+    public Result<List<UserMajorVO>> getLikeMajorList() {
+        Long userId = UserContext.getUserId();
+        return userService.getLikeMajorList(userId);
     }
 
 
