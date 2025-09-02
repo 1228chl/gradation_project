@@ -40,6 +40,7 @@ public class OrderServiceImpl implements OrderService {
         orders.setPrice(orderDTO.getPrice());// 价格
         orders.setTitle(orderDTO.getTitle());// 标题
         orders.setDemand(orderDTO.getDemand());// 需求
+        orders.setType(orderDTO.getType());// 订单类型
         orders.setStatus(StatusContent.UNPAID);// 状态
         try {
 
@@ -155,6 +156,9 @@ public class OrderServiceImpl implements OrderService {
         }
         if (orderDTO.getDemand() != null) {
             order.setDemand(orderDTO.getDemand());
+        }
+        if (orderDTO.getType() != null) {
+            order.setType(orderDTO.getType());
         }
         if (orderDTO.getStatus() != null) {
             order.setStatus(orderDTO.getStatus());

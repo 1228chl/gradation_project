@@ -18,6 +18,7 @@ public class Orders implements Serializable {
     private Double price;// 价格
     private String title;//订单标题
     private String demand;//需求描述
+    private String type;//订单类型
     private Integer status;//状态:0-待支付,1-已支付,2-已完成,3-已取消
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;//创建时间

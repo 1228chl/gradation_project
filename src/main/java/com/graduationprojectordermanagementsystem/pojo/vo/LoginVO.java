@@ -11,5 +11,6 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class LoginVO implements Serializable {
     private Long id;// 用户id
+    private String username;// 用户名
     private String token;// 用户token
 }
