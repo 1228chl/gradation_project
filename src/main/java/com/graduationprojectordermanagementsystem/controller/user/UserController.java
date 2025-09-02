@@ -59,7 +59,7 @@ public class UserController {
         //缓存jwt令牌
         redisUtils.setCache(user.getUsername(), newToken);
 
-        return Result.success(new LoginVO(user.getId(), newToken));
+        return Result.success(new LoginVO(user.getId(), user.getUsername(), newToken));
     }
 
     /**

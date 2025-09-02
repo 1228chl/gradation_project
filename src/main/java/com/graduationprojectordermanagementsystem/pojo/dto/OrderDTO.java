@@ -13,6 +13,7 @@ public class OrderDTO implements Serializable {
     private Double price;// 价格
     private String title;//订单标题
     private String demand;//需求描述
+    private String type;//订单类型
     private Integer status;//订单状态
 
 }
