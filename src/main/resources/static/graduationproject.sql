@@ -5,13 +5,13 @@
  Source Server Type    : MySQL
  Source Server Version : 80039
  Source Host           : localhost:3306
- Source Schema         : graduation
+ Source Schema         : graduationproject
 
  Target Server Type    : MySQL
  Target Server Version : 80039
  File Encoding         : 65001
 
- Date: 01/09/2025 15:04:28
+ Date: 03/09/2025 01:00:21
 */
 
 SET NAMES utf8mb4;
@@ -62,7 +62,7 @@ CREATE TABLE `orders`  (
 -- ----------------------------
 -- Records of orders
 -- ----------------------------
-INSERT INTO `orders` VALUES (1961392725710376961, '4-2-1756467441340-831', 2, 4, 456.35, '整甜许多哼代表摔一同', 'id cillum', '',0, '2025-08-29 19:37:21', '2025-08-29 19:37:21');
+INSERT INTO `orders` VALUES (1961392725710376961, '4-2-1756467441340-831', 2, 4, 456.35, '整甜许多哼代表摔一同', 'id cillum', '', 0, '2025-08-29 19:37:21', '2025-08-29 19:37:21');
 INSERT INTO `orders` VALUES (1961401168936599554, '70-2-1756469454350-127', 2, 4, 286.69, '吸捣没好在生动油门但是全哎出生', 'laboris nostrud', '', 3, '2025-08-29 20:10:54', '2025-08-30 14:10:10');
 INSERT INTO `orders` VALUES (1961675481640108033, '70-2-1756534855594-653', 2, 70, 114.89, '雪崩慢太自从哇塞倒清楚像相当呸', 'ut Lorem in laborum', '', 0, '2025-08-30 14:20:56', '2025-08-30 14:20:56');
 
@@ -115,14 +115,33 @@ CREATE TABLE `user`  (
   UNIQUE INDEX `user_pk`(`username` ASC) USING BTREE,
   UNIQUE INDEX `user_pk_2`(`email` ASC) USING BTREE,
   UNIQUE INDEX `user_pk_3`(`phone` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES (1, 'xunzong', '$2a$12$wo3s1LLf6uv8Q3x59BvhyuIYdsvsUHsnptgpMbT.p1pYFLb7DGJve', '2124159894@qq.com', '15779138804', 1, 'admin', '2025-08-30 14:29:39', '2025-08-15 14:16:04', '2025-08-15 14:16:04', '');
-INSERT INTO `user` VALUES (2, 'xunzong1', '$2a$12$zU.5dJeAudftSmZQ9j9cCuFOk3RzN2NX0UShzSjG9AtvzacuBlEfm', '2124159895@qq.com', '15779138805', 1, 'user', '2025-08-29 10:49:58', '2025-08-23 14:17:24', '2025-08-23 14:17:24', '');
+INSERT INTO `user` VALUES (1, 'xunzong', '$2a$12$wo3s1LLf6uv8Q3x59BvhyuIYdsvsUHsnptgpMbT.p1pYFLb7DGJve', '2124159894@qq.com', '15779138804', 1, 'admin', '2025-09-03 00:09:57', '2025-08-15 14:16:04', '2025-08-15 14:16:04', '');
+INSERT INTO `user` VALUES (2, 'xunzong1', '$2a$12$zU.5dJeAudftSmZQ9j9cCuFOk3RzN2NX0UShzSjG9AtvzacuBlEfm', '2124159895@qq.com', '15779138805', 1, 'user', '2025-09-02 23:02:24', '2025-08-23 14:17:24', '2025-08-23 14:17:24', '');
 INSERT INTO `user` VALUES (5, '莫梓玥', '$2a$12$55rFrgK57AZ3hUHeahjCvewMSiOEDY0n5pciiPqpxn4AVNhvEEP4y', 'hm1i2v.onw24@yahoo.cn', '10509090551', 1, 'user', NULL, '2025-08-30 12:52:11', '2025-08-30 13:04:26', 'G:file/avatar/defaultAvatar.jpg');
 INSERT INTO `user` VALUES (6, '祝乙萍', '$2a$12$TqdYt4p/qyRZNm6gGnR/yO.ALRpCBvIhF.9HFTf2Fw9HfLUBYgNW2', 'ixjlj1.ldk2@gmail.com', '19843953451', 1, 'user', NULL, '2025-08-30 14:28:27', '2025-08-30 14:28:27', 'G:file/avatar/defaultAvatar.jpg');
+
+-- ----------------------------
+-- Table structure for user_major
+-- ----------------------------
+DROP TABLE IF EXISTS `user_major`;
+CREATE TABLE `user_major`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `major_id` int NOT NULL,
+  `create_time` datetime NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user_major
+-- ----------------------------
+INSERT INTO `user_major` VALUES (2, 1, 4, '2025-09-03 00:14:45', '2025-09-03 00:14:45');
+INSERT INTO `user_major` VALUES (3, 1, 2, '2025-09-03 00:14:48', '2025-09-03 00:14:48');
 
 SET FOREIGN_KEY_CHECKS = 1;

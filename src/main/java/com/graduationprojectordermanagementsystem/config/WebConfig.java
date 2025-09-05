@@ -18,6 +18,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Resource
     private JwtAuthenticationInterceptor jwtAuthenticationInterceptor;
 
+
     @Override
     public void addInterceptors(InterceptorRegistry  registry){
         registry.addInterceptor(jwtAuthenticationInterceptor)

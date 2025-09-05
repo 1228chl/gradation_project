@@ -68,6 +68,7 @@ debug: true
 
 # 文件上传配置
 file:
+  base-url: http://106.52.6.93:8080
   upload-dir: /home/graduation/file/uploads  # Linux 系统路径，Windows 可写 C:/uploads
   upload-avatar-dir: /home/graduation/file/avatar
 

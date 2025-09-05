@@ -11,21 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableKnife4j
 public class SwaggerConfig {
-//    @Bean
-//    public OpenAPI openAPI() {
-//        return new OpenAPI()
-//                .info(new Info().title("API文档").version("1.0"))
-//                // 添加安全协议（若使用JWT）
-//                .addSecurityItem(new SecurityRequirement().addList("JWT"))
-//                .components(new Components()
-//                        .addSecuritySchemes("JWT",
-//                                new SecurityScheme()
-//                                        .type(SecurityScheme.Type.HTTP)
-//                                        .scheme("bearer")
-//                                        .bearerFormat("JWT")
-//                        )
-//                );
-//    }
+
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
@@ -39,7 +25,8 @@ public class SwaggerConfig {
     public GroupedOpenApi userApi() {
         return GroupedOpenApi.builder()
                 .group("user")
-                .pathsToMatch("/api/user/**") // 匹配控制器中定义的接口路径
+                .pathsToMatch("/api/user/**",
+                        "/api/file/**") // 匹配控制器中定义的接口路径
                 .packagesToScan("com.graduationprojectordermanagementsystem.controller.user")
                 .build();
     }

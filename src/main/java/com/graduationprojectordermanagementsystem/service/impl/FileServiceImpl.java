@@ -2,9 +2,9 @@ package com.graduationprojectordermanagementsystem.service.impl;
 
 import com.graduationprojectordermanagementsystem.contents.StatusContent;
 import com.graduationprojectordermanagementsystem.exception.UploadFileEmptyException;
-import com.graduationprojectordermanagementsystem.mapper.UploadFileMapper;
+import com.graduationprojectordermanagementsystem.mapper.FileMapper;
 import com.graduationprojectordermanagementsystem.pojo.entity.UploadFile;
-import com.graduationprojectordermanagementsystem.service.UploadFileService;
+import com.graduationprojectordermanagementsystem.service.FileService;
 import com.graduationprojectordermanagementsystem.util.UserContext;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -20,12 +20,14 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class UploadFileServiceImpl implements UploadFileService {
+public class FileServiceImpl implements FileService {
 
     @Resource
-    private UploadFileMapper uploadFileMapper;
+    private FileMapper fileMapper;
 
     // 配置文件中定义的上传目录（正式目录）
+    @Value("${file.base-url}")
+    private String baseUrl;
     @Value("${file.upload-dir}")
     private String uploadDir;
     @Value("${file.upload-avatar-dir}")
@@ -63,7 +65,7 @@ public class UploadFileServiceImpl implements UploadFileService {
 
         // 4. 生成唯一文件名
         String fileExtension = "";
-        int lastDotIndex = originalFilename.lastIndexOf(".");
+        int lastDotIndex = originalFilename.lastIndexOf(".");// 获取文件扩展名
         if (lastDotIndex > 0) {
             fileExtension = originalFilename.substring(lastDotIndex);
         }
@@ -82,17 +84,19 @@ public class UploadFileServiceImpl implements UploadFileService {
         // 6. 构建数据库实体并插入
         UploadFile uploadFile = new UploadFile();
         uploadFile.setFileName(originalFilename);
+        uploadFile.setFileUuid(uniqueFileName);
         uploadFile.setFilePath(finalFilePath.toString());
         uploadFile.setFileType(file.getContentType());
         uploadFile.setFileSize(file.getSize());
         uploadFile.setFileOrAvatar(StatusContent.FILE);
-        uploadFile.setFileUrl("http://localhost:8080/api/common/file/download/" + uniqueFileName);
+        String fileWebPath = "/uploads/" + uniqueFileName;
+        uploadFile.setFileUrl(baseUrl+fileWebPath);
         uploadFile.setUsername(username);
 
 
         // 6. 写数据库（后）
         try {
-            uploadFileMapper.insert(uploadFile);
+            fileMapper.insert(uploadFile);
         } catch (Exception e) {
             log.error("数据库插入失败，尝试删除已写入的文件", e);
             try {
@@ -156,17 +160,19 @@ public class UploadFileServiceImpl implements UploadFileService {
         // 6. 构建数据库实体并插入
         UploadFile uploadFile = new UploadFile();
         uploadFile.setFileName(originalFilename);
+        uploadFile.setFileUuid(uniqueFileName);
         uploadFile.setFilePath(finalFilePath.toString());
         uploadFile.setFileType(file.getContentType());
         uploadFile.setFileSize(file.getSize());
         uploadFile.setFileOrAvatar(StatusContent.AVATAR);
-        uploadFile.setFileUrl("http://localhost:8080/api/common/file/download/" + uniqueFileName);
+        String avatarWebPath = "/avatar/" + uniqueFileName;// 头像路径
+        uploadFile.setFileUrl(baseUrl + avatarWebPath);
         uploadFile.setUsername(username);
 
 
         // 6. 写数据库（后）
         try {
-            uploadFileMapper.insert(uploadFile);
+            fileMapper.insert(uploadFile);
         } catch (Exception e) {
             log.error("数据库插入失败，尝试删除已写入的头像", e);
             try {
@@ -181,6 +187,11 @@ public class UploadFileServiceImpl implements UploadFileService {
         log.info("🎉 文件上传成功，文件名: {}", originalFilename);
 
         return uploadFile;
+    }
+
+    @Override
+    public UploadFile selectByUuid(String fileUuid) {
+        return fileMapper.selectByUuid(fileUuid);
     }
 
 }

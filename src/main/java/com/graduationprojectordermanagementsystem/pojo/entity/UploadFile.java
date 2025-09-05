@@ -14,6 +14,7 @@ public class UploadFile implements Serializable {
     private Long id;//文件id
     private String Username;//文件上传者
     private String fileName;//文件名
+    private String fileUuid; // 存储 UUID 文件名，如：a1b2c3.jpg
     private String fileUrl;//文件url
     private String filePath;//文件路径
     private String fileType;//文件类型

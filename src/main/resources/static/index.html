@@ -1,29 +1,293 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的网站</title>
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            text-align: center;
-            padding: 50px;
-        }
-        h1 {
-            color: #007BFF;
-        }
-        p {
-            font-size: 1.2em;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🧪 文件下载 & 头像预览测试</title>
+  <script src="https://cdn.staticfile.org/axios/1.6.2/axios.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background-color: #f7f9fc;
+      color: #333;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #7f8c8d;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+    .info {
+      margin: 15px 0;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .info.success { background-color: #e8f4fd; border: 1px solid #b8daff; color: #1c7ed6; }
+    .alert { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    input[type="text"], input[type="password"], select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 15px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    button {
+      flex: 1;
+      padding: 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { background-color: #0056b3; }
+    button:disabled { background-color: #6c757d; }
+    .preview-area {
+      margin-top: 25px;
+      text-align: center;
+    }
+    .preview-area img {
+      max-width: 100%;
+      max-height: 400px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+    .log {
+      margin-top: 20px;
+      padding: 12px;
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      max-height: 180px;
+      overflow-y: auto;
+      font-size: 13px;
+      color: #495057;
+    }
+  </style>
 </head>
 <body>
-<h1>欢迎来到我的网站</h1>
-<p>这是一个简单的首页示例。</p>
-<p>此网站已通过 robots.txt 防止被搜索引擎收录。</p>
+  <div class="container">
+    <h1>🧪 文件操作测试</h1>
+    <p class="subtitle">使用 xunzong 登录，测试文件下载与头像预览</p>
+
+    <!-- 登录状态 -->
+    <div class="info success" id="loginStatus" style="display:none;">
+      <strong>✅ 已登录</strong>：xunzong（admin）
+    </div>
+
+    <!-- 登录表单 -->
+    <div id="loginForm">
+      <label>用户名：</label>
+      <input type="text" id="username" value="xunzong" disabled />
+
+      <label>密码：</label>
+      <input type="password" id="password" value="123456" />
+
+      <button onclick="login()" style="width:100%;margin-top:10px;">🔐 自动登录并测试</button>
+    </div>
+
+    <!-- 操作区 -->
+    <div id="mainApp" class="hidden">
+      <div class="info alert">
+        <strong>📌 当前 fileUuid = UUID + 扩展名</strong>（如：xxx.png, xxx.XLSX）
+      </div>
+
+      <label for="fileSelect">选择操作：</label>
+      <select id="fileSelect" onchange="onFileChange()">
+        <option value="0">🖼️ 头像预览：b89964e1-...png</option>
+        <option value="1">📥 文件下载：e31ec9ae-...XLSX</option>
+      </select>
+
+      <label for="fileUuid">📄 当前 fileUuid：</label>
+      <input type="text" id="fileUuid" readonly />
+
+      <div class="btn-group">
+        <button onclick="previewAvatar()">👁️ 预览头像</button>
+        <button onclick="downloadFile()">⬇️ 下载文件</button>
+      </div>
+
+      <div class="preview-area">
+        <img id="previewImage" src="" alt="预览图" style="display:none;" />
+      </div>
+    </div>
+
+    <!-- 日志 -->
+    <div id="log" class="log" style="display:none;"></div>
+  </div>
+
+  <script>
+    // =============== 配置 ===============
+    const BASE_URL = 'http://106.52.6.93:8080';
+    const loginUrl = `${BASE_URL}/api/user/login`;
+    const downloadUrl = `${BASE_URL}/api/file/download/`;
+    const previewUrl = `${BASE_URL}/api/file/avatar/`;
+
+    // 📁 文件列表（UUID + 扩展名）
+    const files = [
+      { name: "头像 (PNG)", fileUuid: "b89964e1-1581-4173-bff3-d1af70590f8b.png" },
+      { name: "文件 (XLSX)", fileUuid: "e31ec9ae-b4d9-46e6-92e3-c01146c17fe1.XLSX" }
+    ];
+
+    let authToken = null;
+
+    // =============== 日志 ===============
+    function log(msg) {
+      const logEl = document.getElementById('log');
+      logEl.style.display = 'block';
+      const time = new Date().toLocaleTimeString();
+      logEl.innerHTML += `<div>[${time}] ${msg}</div>`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // =============== 登录 ===============
+    async function login() {
+      const password = document.getElementById('password').value;
+
+      log('尝试登录：xunzong');
+      try {
+        const response = await axios.post(loginUrl, {
+          account: 'xunzong',
+          password: password
+        });
+
+        if (response.data.code === 1 && response.data.data?.token) {
+          authToken = response.data.data.token;
+          log(`✅ 登录成功！Token: ${authToken.substring(0, 20)}...`);
+          
+          document.getElementById('loginStatus').style.display = 'block';
+          document.getElementById('loginForm').style.display = 'none';
+          document.getElementById('mainApp').classList.remove('hidden');
+
+          // 初始化文件选择
+          onFileChange();
+        } else {
+          throw new Error(response.data.msg || '登录失败');
+        }
+      } catch (error) {
+        log(`❌ 登录失败：${error.message}`);
+        if (error.response) {
+          log(`状态: ${error.response.status} ${error.response.statusText}`);
+          log(`响应: <pre>${JSON.stringify(error.response.data, null, 2)}</pre>`);
+        }
+      }
+    }
+
+    // =============== 文件选择变化 ===============
+    function onFileChange() {
+      const index = document.getElementById('fileSelect').value;
+      const file = files[index];
+      document.getElementById('fileUuid').value = file.fileUuid;
+    }
+
+    // =============== 预览头像 ===============
+    async function previewAvatar() {
+      const fileUuid = document.getElementById('fileUuid').value;
+      if (!fileUuid || !authToken) return;
+
+      const img = document.getElementById('previewImage');
+      img.style.display = 'none';
+      log(`请求预览头像：${fileUuid}`);
+
+      try {
+        const response = await axios.get(previewUrl + encodeURIComponent(fileUuid), {
+          responseType: 'blob',
+          headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+
+        if (response.data.type === 'application/json') {
+          showErrorFromBlob(response.data);
+          return;
+        }
+
+        const url = window.URL.createObjectURL(response.data);
+        img.src = url;
+        img.style.display = 'block';
+        log('✅ 头像预览加载成功！');
+      } catch (error) {
+        handleRequestError(error, '预览');
+      }
+    }
+
+    // =============== 下载文件 ===============
+    async function downloadFile() {
+      const fileUuid = document.getElementById('fileUuid').value;
+      if (!fileUuid || !authToken) return;
+
+      log(`请求下载文件：${fileUuid}`);
+      try {
+        const response = await axios.get(downloadUrl + encodeURIComponent(fileUuid), {
+          responseType: 'blob',
+          headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+
+        if (response.data.type === 'application/json') {
+          showErrorFromBlob(response.data);
+          return;
+        }
+
+        const blob = new Blob([response.data]);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileUuid; // 使用 fileUuid 作为文件名
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        log('✅ 下载已触发！');
+      } catch (error) {
+        handleRequestError(error, '下载');
+      }
+    }
+
+    // =============== 错误处理 ===============
+    function showErrorFromBlob(blob) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const err = JSON.parse(reader.result);
+          alert('❌ ' + (err.msg || err.message));
+        } catch (e) {
+          alert('❌ 响应错误：' + reader.result);
+        }
+      };
+      reader.readAsText(blob);
+    }
+
+    function handleRequestError(error, action) {
+      log(`❌ ${action}失败：${error.message}`);
+      if (error.response?.status === 401) {
+        alert('🚫 Token 无效或过期，请重新登录');
+      } else if (error.response?.status === 404) {
+        alert('📁 文件未找到');
+      }
+    }
+  </script>
 </body>
 </html>

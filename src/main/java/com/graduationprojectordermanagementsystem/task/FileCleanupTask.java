@@ -1,5 +1,5 @@
 package com.graduationprojectordermanagementsystem.task;
-import com.graduationprojectordermanagementsystem.mapper.UploadFileMapper; // 你的文件Mapper
+import com.graduationprojectordermanagementsystem.mapper.FileMapper; // 你的文件Mapper
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +27,7 @@ public class FileCleanupTask {
     private String uploadAvatarDir;
 
     @Resource
-    private UploadFileMapper uploadFileMapper;
+    private FileMapper uploadFileMapper;
 
     /**
      * 每天凌晨 2:00 执行

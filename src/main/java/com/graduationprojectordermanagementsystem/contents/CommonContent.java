@@ -1,6 +1,10 @@
 package com.graduationprojectordermanagementsystem.contents;
 
+import org.springframework.beans.factory.annotation.Value;
+
 public class CommonContent {
+    @Value("${file.upload-avatar-dir}")
+    private static String uploadAvatarDir;
     public static final String UsernameAlreadyRegistered = "用户名已被注册";
     public static final String EmailAlreadyRegistered = "邮箱已被注册";
     public static final String RegisterSuccess = "注册成功";
@@ -15,7 +19,7 @@ public class CommonContent {
     public static final String FileUploadFailed = "文件上传失败";//文件上传失败
     public static final String FileEmpty = "文件不能为空";//文件不能为空
     public static final String TokenExpired = "Token已过期";//token失效
-    public static final String DefaultAvatar = "G:file/avatar/defaultAvatar.jpg";//默认头像
+    public static final String DefaultAvatar = uploadAvatarDir+"b89964e1-1581-4173-bff3-d1af70590f8b.png";//默认头像
 
     public static final String PASSWORD_EDIT_FAILED = "密码修改失败";
     public static final String ORDER_STATUS_ERROR = "订单状态错误";
