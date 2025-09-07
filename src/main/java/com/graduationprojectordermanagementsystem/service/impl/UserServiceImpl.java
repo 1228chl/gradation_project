@@ -258,6 +258,9 @@ public class UserServiceImpl implements UserService {
         return updateResult > 0;
     }
 
+
+
+
     /**
      * 添加我喜欢功能
      */
@@ -271,22 +274,16 @@ public class UserServiceImpl implements UserService {
         }
 
         // 查询用户是否存在（防止攻击）
-        LambdaQueryWrapper<User> queryWrapperUser = new LambdaQueryWrapper<>();
-        queryWrapperUser.eq(User::getId, userId);
-        if (userMapper.selectOne(queryWrapperUser) == null) {
+        if (isUserExist(userId)) {
             return Result.error("用户不存在");
         }
         // 验证专业是否存在（防止攻击）
-        LambdaQueryWrapper<Major> queryWrapperMajor = new LambdaQueryWrapper<>();
-        queryWrapperMajor.eq(Major::getId, majorId);
-        if (majorMapper.selectOne(queryWrapperMajor) == null) {
+        if (isMajorExist(majorId)) {
             return Result.error("专业不存在");
         }
 
         // 查询是否已存在（防止重复添加）
-        LambdaQueryWrapper<UserMajor> queryWrapperUserMajor = new LambdaQueryWrapper<>();
-        queryWrapperUserMajor.eq(UserMajor::getUserId, userId)
-                .eq(UserMajor::getMajorId, majorId);
+        LambdaQueryWrapper<UserMajor> queryWrapperUserMajor = isUserMajorExist(userId, majorId);
 
         if (userMajorMapper.selectCount(queryWrapperUserMajor) > 0) {
             return Result.error("该专业已添加至“我喜欢”，请勿重复添加");
@@ -316,22 +313,16 @@ public class UserServiceImpl implements UserService {
             return Result.error("专业ID不能为空");
         }
         // 查询用户是否存在（防止攻击）
-        LambdaQueryWrapper<User> queryWrapperUser = new LambdaQueryWrapper<>();
-        queryWrapperUser.eq(User::getId, userId);
-        if (userMapper.selectOne(queryWrapperUser) == null) {
+
+        if (isUserExist(userId)) {
             return Result.error("用户不存在");
         }
         // 验证专业是否存在（防止攻击）
-        LambdaQueryWrapper<Major> queryWrapperMajor = new LambdaQueryWrapper<>();
-        queryWrapperMajor.eq(Major::getId, majorId);
-        if (majorMapper.selectOne(queryWrapperMajor) == null) {
+        if (isMajorExist(majorId)) {
             return Result.error("专业不存在");
         }
         // 查询是否不存在（防止重复添加）
-        LambdaQueryWrapper<UserMajor> queryWrapperUserMajor = new LambdaQueryWrapper<>();
-        queryWrapperUserMajor.eq(UserMajor::getUserId, userId)
-                .eq(UserMajor::getMajorId, majorId);
-
+        LambdaQueryWrapper<UserMajor> queryWrapperUserMajor = isUserMajorExist(userId, majorId);
         if (userMajorMapper.selectCount(queryWrapperUserMajor) == 0) {
             return Result.error("已取消“我喜欢”，请勿重复取消");
         }
@@ -352,9 +343,7 @@ public class UserServiceImpl implements UserService {
         log.info("通过用户ID查询我喜欢列表，用户id: {}", userId);
 
         // 1. 可选：验证用户是否存在
-        LambdaQueryWrapper<User> userWrapper = new LambdaQueryWrapper<>();
-        userWrapper.eq(User::getId, userId);
-        if (userMapper.selectOne(userWrapper) == null) {
+        if (isUserExist(userId)) {
             return Result.error("用户不存在");
         }
 
@@ -382,6 +371,34 @@ public class UserServiceImpl implements UserService {
         }
         log.info("用户 {} 共有 {} 条我喜欢记录", userId, voList.size());
         return Result.success(voList);
+    }
+
+    /**
+     * 判断用户是否存在
+     */
+    private boolean isUserExist(Long userId) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getId, userId);
+        return userMapper.selectOne(queryWrapper) == null;
+    }
+
+    /**
+     * 验证专业是否存在
+     */
+    private boolean isMajorExist(Long majorId) {
+        LambdaQueryWrapper<Major> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Major::getId, majorId);
+        return majorMapper.selectOne(queryWrapper) == null;
+    }
+
+    /**
+     * 验证用户-专业关联记录是否存在
+     */
+    private LambdaQueryWrapper<UserMajor> isUserMajorExist(Long userId, Long majorId) {
+        LambdaQueryWrapper<UserMajor> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(UserMajor::getUserId, userId)
+                .eq(UserMajor::getMajorId, majorId);
+        return queryWrapper;
     }
 
 }

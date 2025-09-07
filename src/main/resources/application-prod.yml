@@ -72,3 +72,7 @@ file:
   upload-dir: /home/graduation/file/uploads  # Linux 系统路径，Windows 可写 C:/uploads
   upload-avatar-dir: /home/graduation/file/avatar
 
+jwt:
+  secret: 7JWI64WV7ZWY7IS47JqUIOyggOuKlCDsp4DquIggand0IOqzteu2gOykkeyeheuL
+  expire-time: 7200
+

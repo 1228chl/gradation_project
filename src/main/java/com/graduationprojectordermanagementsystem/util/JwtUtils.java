@@ -27,12 +27,15 @@ public class JwtUtils {
     @Resource
     private RedisUtils redisUtils;
 
+    @Resource
+    private JwtContent jwtContent;
+
     /**
      * 获取签名密钥
      */
     private Key getSigningKey() {
         if (signingKey == null) {
-            byte[] keyBytes = Decoders.BASE64.decode(JwtContent.SECRET);
+            byte[] keyBytes = Decoders.BASE64.decode(jwtContent.getSECRET());
             signingKey = Keys.hmacShaKeyFor(keyBytes);
         }
         return signingKey;
@@ -45,7 +48,7 @@ public class JwtUtils {
 
         String username = user.getUsername();
         Date now = new Date();
-        Date expiraDate = new Date(now.getTime() + JwtContent.EXPIRE_TIME);
+        Date expiraDate = new Date(now.getTime() + jwtContent.getEXPIRE_TIME() * 1000);
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRole());
         claims.put("userId", user.getId());

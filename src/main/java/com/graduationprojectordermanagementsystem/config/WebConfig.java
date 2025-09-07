@@ -2,11 +2,13 @@ package com.graduationprojectordermanagementsystem.config;
 
 import com.graduationprojectordermanagementsystem.interceptor.JwtAuthenticationInterceptor;
 import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.nio.charset.StandardCharsets;
@@ -18,6 +20,15 @@ public class WebConfig implements WebMvcConfigurer {
     @Resource
     private JwtAuthenticationInterceptor jwtAuthenticationInterceptor;
 
+    @Value("${file.upload-avatar-dir}")
+    private String uploadAvatarDir;
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // 将 /avatars/** 映射到头像目录
+        registry.addResourceHandler("/avatars/**")
+                .addResourceLocations("file:" + uploadAvatarDir + "/");
+    }
 
     @Override
     public void addInterceptors(InterceptorRegistry  registry){

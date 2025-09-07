@@ -7,6 +7,7 @@ import com.graduationprojectordermanagementsystem.service.MajorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,7 +27,7 @@ public class MajorController {
     @Operation(summary = "添加专业")
     @RequireAnyRole({"admin"})
     @PostMapping
-    public Result<String> addMajor(@RequestBody MajorDTO majorDTO){
+    public Result<String> addMajor(@Valid @RequestBody MajorDTO majorDTO){
         if (majorService.addMajor(majorDTO)){
             log.info("添加专业成功");
             return Result.success("添加专业成功");

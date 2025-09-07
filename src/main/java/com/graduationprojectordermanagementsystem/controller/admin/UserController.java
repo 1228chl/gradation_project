@@ -9,6 +9,7 @@ import com.graduationprojectordermanagementsystem.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,7 +47,7 @@ public class UserController {
     @Operation(summary = "修改用户信息")
     @PutMapping
     @RequireAnyRole({"admin"})
-    public Result<String> updateUser(@RequestBody UserDTO userDTO){
+    public Result<String> updateUser(@Valid @RequestBody UserDTO userDTO){
         log.info("修改用户信息：{}", userDTO);
         if (userService.updateUser(userDTO)){
             return Result.success("修改用户信息成功");

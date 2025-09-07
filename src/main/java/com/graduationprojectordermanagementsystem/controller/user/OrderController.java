@@ -9,6 +9,7 @@ import com.graduationprojectordermanagementsystem.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +28,7 @@ public class OrderController {
     @Operation(summary = "添加订单")
     @RequireAnyRole({"user","admin"})
     @PostMapping
-    public Result<String> addOrder(@RequestBody OrderDTO orderDTO) {
+    public Result<String> addOrder(@Valid @RequestBody OrderDTO orderDTO) {
         log.info("添加订单");
         if (orderService.addOrder(orderDTO)){
             log.info("订单添加成功");

@@ -1,5 +1,6 @@
 package com.graduationprojectordermanagementsystem.pojo.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDTO implements Serializable {
+    @NotNull(message = "用户ID不能为空")
     private Long id;//用户id
     private String username;//用户名
     private String password;//密码

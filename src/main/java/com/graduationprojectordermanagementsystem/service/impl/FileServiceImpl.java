@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -90,7 +91,12 @@ public class FileServiceImpl implements FileService {
         uploadFile.setFileSize(file.getSize());
         uploadFile.setFileOrAvatar(StatusContent.FILE);
         String fileWebPath = "/uploads/" + uniqueFileName;
-        uploadFile.setFileUrl(baseUrl+fileWebPath);
+        String fileUrl = UriComponentsBuilder
+                .fromHttpUrl(baseUrl)
+                .path(fileWebPath)
+                .build()
+                .toUriString();
+        uploadFile.setFileUrl(fileUrl);
         uploadFile.setUsername(username);
 
 
@@ -102,7 +108,7 @@ public class FileServiceImpl implements FileService {
             try {
                 Files.deleteIfExists(finalFilePath);
             } catch (IOException ioException) {
-                log.error("无法清理已生成的文件: " + finalFilePath, ioException);
+                log.error("无法清理已生成的文件: {}", finalFilePath, ioException);
             }
             throw e; // 重新抛出异常
         }
@@ -166,7 +172,12 @@ public class FileServiceImpl implements FileService {
         uploadFile.setFileSize(file.getSize());
         uploadFile.setFileOrAvatar(StatusContent.AVATAR);
         String avatarWebPath = "/avatar/" + uniqueFileName;// 头像路径
-        uploadFile.setFileUrl(baseUrl + avatarWebPath);
+        String fileUrl = UriComponentsBuilder
+                .fromHttpUrl(baseUrl)
+                .path(avatarWebPath)
+                .build()
+                .toUriString();
+        uploadFile.setFileUrl(fileUrl);
         uploadFile.setUsername(username);
 
 

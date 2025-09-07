@@ -1,6 +1,7 @@
 package com.graduationprojectordermanagementsystem.util;
 
 import com.graduationprojectordermanagementsystem.contents.JwtContent;
+import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 public class RedisUtils {
+    @Resource
+    private JwtContent jwtContent;
     private final RedisTemplate<String, Object> redisTemplate;
     //缓存前缀
     private static final String CACHE_PREFIX = "app:cache:";
@@ -31,7 +34,7 @@ public class RedisUtils {
      * @param value  值（支持任意对象）
      */
     public <T> void setCache(String key, T value) {
-        Long time = JwtContent.EXPIRE_TIME;// 过期时间（单位：秒）和jwt一致
+        Long time = jwtContent.getEXPIRE_TIME();// 过期时间（单位：秒）和jwt一致
         TimeUnit unit = TimeUnit.SECONDS;// 时间单位(默认为秒)
         redisTemplate.opsForValue().set(CACHE_PREFIX + key, value, time, unit);
     }
@@ -69,13 +72,13 @@ public class RedisUtils {
     /**
      * 将 JWT 的JTI 加入黑名单（自动设置 Token 剩余有效期）
      * @param jti           JWT的唯一标识（从 Token 解析）
-     * @param expireTimeMs  JWT剩余有效时间（秒）
+     * @param expireTimeSeconds  JWT剩余有效时间（秒）
      */
-    public void addToBlacklist(String jti, long expireTimeMs) {
+    public void addToBlacklist(String jti, long expireTimeSeconds) {
         redisTemplate.opsForValue().set(
                 BLACKLIST_PREFIX + jti,// 带命名空间
                 "invalid",// 值随便填
-                expireTimeMs,// 过期时间
+                expireTimeSeconds,// 过期时间
                 TimeUnit.SECONDS// 时间单位
         );
     }
