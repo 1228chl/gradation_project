@@ -4,7 +4,7 @@ import com.graduationprojectordermanagementsystem.pojo.dto.LoginDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.RegisterDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.UserDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.User;
-import com.graduationprojectordermanagementsystem.pojo.vo.UserMajorVO;
+import com.graduationprojectordermanagementsystem.pojo.vo.UserCourseVO;
 import com.graduationprojectordermanagementsystem.pojo.vo.UserVO;
 import com.graduationprojectordermanagementsystem.result.PageResult;
 import com.graduationprojectordermanagementsystem.result.Result;
@@ -25,9 +25,9 @@ public interface UserService{
 
     boolean updateUser(UserDTO userDTO);
 
-    Result<String> addUserMajor(Long userId, Long majorId);
+    Result<String> addUserCourse(Long userId, Long courseId);
 
-    Result<String> deleteUserMajor(Long userId, Long majorId);
+    Result<String> deleteUserCourse(Long userId, Long courseId);
 
-    Result<List<UserMajorVO>> getLikeMajorList(Long userId);
+    Result<List<UserCourseVO>> getLikeCourseList(Long userId);
 }

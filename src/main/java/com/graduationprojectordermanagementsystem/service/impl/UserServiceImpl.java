@@ -8,16 +8,12 @@ import com.graduationprojectordermanagementsystem.contents.CommonContent;
 import com.graduationprojectordermanagementsystem.contents.RoleContent;
 import com.graduationprojectordermanagementsystem.contents.StatusContent;
 import com.graduationprojectordermanagementsystem.exception.*;
-import com.graduationprojectordermanagementsystem.mapper.MajorMapper;
-import com.graduationprojectordermanagementsystem.mapper.UserMajorMapper;
-import com.graduationprojectordermanagementsystem.mapper.UserMapper;
+import com.graduationprojectordermanagementsystem.mapper.*;
 import com.graduationprojectordermanagementsystem.pojo.dto.LoginDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.RegisterDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.UserDTO;
-import com.graduationprojectordermanagementsystem.pojo.entity.Major;
-import com.graduationprojectordermanagementsystem.pojo.entity.User;
-import com.graduationprojectordermanagementsystem.pojo.entity.UserMajor;
-import com.graduationprojectordermanagementsystem.pojo.vo.UserMajorVO;
+import com.graduationprojectordermanagementsystem.pojo.entity.*;
+import com.graduationprojectordermanagementsystem.pojo.vo.UserCourseVO;
 import com.graduationprojectordermanagementsystem.pojo.vo.UserVO;
 import com.graduationprojectordermanagementsystem.result.PageResult;
 import com.graduationprojectordermanagementsystem.result.Result;
@@ -29,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,9 +36,9 @@ public class UserServiceImpl implements UserService {
     @Resource
     private UserMapper userMapper;
     @Resource
-    private UserMajorMapper userMajorMapper;
+    private UserCourseMapper userCourseMapper;
     @Resource
-    private MajorMapper majorMapper;
+    private CourseMapper courseMapper;
 
 
 
@@ -139,8 +136,18 @@ public class UserServiceImpl implements UserService {
         // wrapper.eq(User::getStatus, StatusContent.ENABLE);
 
         Page<User> userPage = userMapper.selectPage(page, wrapper);
+        // 3. 提取课程 ID 列表，用于统计 likeCount
+        List<Long> courseIdList = userPage.getRecords().stream()
+                .map(User::getId)
+                .toList();
 
-        // 3. 转换实体为 VO 列表
+        // 如果没有课程，避免后续 SQL 报错
+        if (courseIdList.isEmpty()) {
+            List<UserVO> emptyList = new ArrayList<>();
+            return PageResult.of(userPage.getTotal(), pageNum, pageSize, emptyList);
+        }
+
+        // 4. 转换实体为 VO 列表
         List<UserVO> voList = userPage.getRecords().stream().map(user -> {
             UserVO vo = new UserVO();
             BeanUtils.copyProperties(user, vo);
@@ -148,7 +155,7 @@ public class UserServiceImpl implements UserService {
             return vo;
         }).toList();
 
-        // 4. 封装并返回 PageResult
+        // 5. 封装并返回 PageResult
         return PageResult.of(
                 userPage.getTotal(),    // 总数
                 (int) userPage.getCurrent(), // 当前页
@@ -265,12 +272,12 @@ public class UserServiceImpl implements UserService {
      * 添加我喜欢功能
      */
     @Override
-    public Result<String> addUserMajor(Long userId, Long majorId){
-        log.info("添加我喜欢功能，用户id {}，专业id {}", userId, majorId);
+    public Result<String> addUserCourse(Long userId, Long courseId){
+        log.info("添加我喜欢功能，用户id {}，课程id {}", userId, courseId);
 
         // 参数校验
-        if (userId == null || majorId == null) {
-            return Result.error("用户ID或专业ID不能为空");
+        if (userId == null || courseId == null) {
+            return Result.error("用户ID或课程ID不能为空");
         }
 
         // 查询用户是否存在（防止攻击）
@@ -278,24 +285,24 @@ public class UserServiceImpl implements UserService {
             return Result.error("用户不存在");
         }
         // 验证专业是否存在（防止攻击）
-        if (isMajorExist(majorId)) {
-            return Result.error("专业不存在");
+        if (isCourseExist(courseId)) {
+            return Result.error("课程不存在");
         }
 
         // 查询是否已存在（防止重复添加）
-        LambdaQueryWrapper<UserMajor> queryWrapperUserMajor = isUserMajorExist(userId, majorId);
+        LambdaQueryWrapper<UserCourse> queryWrapperUserCourse = isUserCourseExist(userId, courseId);
 
-        if (userMajorMapper.selectCount(queryWrapperUserMajor) > 0) {
+        if (userCourseMapper.selectCount(queryWrapperUserCourse) > 0) {
             return Result.error("该专业已添加至“我喜欢”，请勿重复添加");
         }
 
         // 构建实体类保存
-        UserMajor userMajor = new UserMajor();
-        userMajor.setUserId(userId);
-        userMajor.setMajorId(majorId);
+        UserCourse userCourse = new UserCourse();
+        userCourse.setUserId(userId);
+        userCourse.setCourseId(courseId);
         // createTime 由 MyBatis-Plus 自动填充（@TableField(fill = FieldFill.INSERT)）
 
-        int save = userMajorMapper.insert(userMajor);
+        int save = userCourseMapper.insert(userCourse);
         if (save>0) {
             return Result.success("已成功添加至“我喜欢”");
         } else {
@@ -307,10 +314,10 @@ public class UserServiceImpl implements UserService {
      * 我喜欢功能(取消)
      */
     @Override
-    public Result<String> deleteUserMajor(Long userId, Long majorId) {
-        log.info("取消我喜欢功能，用户id {}，专业id {}", userId, majorId);
-        if (majorId == null) {
-            return Result.error("专业ID不能为空");
+    public Result<String> deleteUserCourse(Long userId, Long courseId) {
+        log.info("取消我喜欢功能，用户id {}，课程id {}", userId, courseId);
+        if (courseId == null) {
+            return Result.error("课程ID不能为空");
         }
         // 查询用户是否存在（防止攻击）
 
@@ -318,16 +325,16 @@ public class UserServiceImpl implements UserService {
             return Result.error("用户不存在");
         }
         // 验证专业是否存在（防止攻击）
-        if (isMajorExist(majorId)) {
-            return Result.error("专业不存在");
+        if (isCourseExist(courseId)) {
+            return Result.error("课程不存在");
         }
         // 查询是否不存在（防止重复添加）
-        LambdaQueryWrapper<UserMajor> queryWrapperUserMajor = isUserMajorExist(userId, majorId);
-        if (userMajorMapper.selectCount(queryWrapperUserMajor) == 0) {
+        LambdaQueryWrapper<UserCourse> queryWrapperUserCourse = isUserCourseExist(userId, courseId);
+        if (userCourseMapper.selectCount(queryWrapperUserCourse) == 0) {
             return Result.error("已取消“我喜欢”，请勿重复取消");
         }
 
-        int save = userMajorMapper.delete(queryWrapperUserMajor);
+        int save = userCourseMapper.delete(queryWrapperUserCourse);
         if (save>0) {
             return Result.success("已成功取消“我喜欢”");
         } else {
@@ -339,7 +346,7 @@ public class UserServiceImpl implements UserService {
      * 我喜欢 列表
      */
     @Override
-    public Result<List<UserMajorVO>> getLikeMajorList(Long userId) {
+    public Result<List<UserCourseVO>> getLikeCourseList(Long userId) {
         log.info("通过用户ID查询我喜欢列表，用户id: {}", userId);
 
         // 1. 可选：验证用户是否存在
@@ -348,25 +355,25 @@ public class UserServiceImpl implements UserService {
         }
 
         // 2. 查询用户喜欢的专业关联记录
-        LambdaQueryWrapper<UserMajor> wrapper = new LambdaQueryWrapper<>();
+        LambdaQueryWrapper<UserCourse> wrapper = new LambdaQueryWrapper<>();
 
         // 直接查询 user_major 表，只取 major_id 和 create_time
-        wrapper.select(UserMajor::getMajorId, UserMajor::getCreateTime) // 只查需要的字段
-                .eq(UserMajor::getUserId, userId)
-                .orderByDesc(UserMajor::getCreateTime);
+        wrapper.select(UserCourse::getCourseId, UserCourse::getCreateTime) // 只查需要的字段
+                .eq(UserCourse::getUserId, userId)
+                .orderByDesc(UserCourse::getCreateTime);
 
-        List<UserMajor> list = userMajorMapper.selectList(wrapper);
+        List<UserCourse> list = userCourseMapper.selectList(wrapper);
 
         // 转换为 VO
-        List<UserMajorVO> voList = list.stream().map(um -> {
-            UserMajorVO vo = new UserMajorVO();
-            vo.setMajorId(um.getMajorId());
+        List<UserCourseVO> voList = list.stream().map(um -> {
+            UserCourseVO vo = new UserCourseVO();
+            vo.setCourseId(um.getCourseId());
             vo.setCreateTime(um.getCreateTime()); // 假设 createTime 是 Date 或 Timestamp
             return vo;
         }).collect(Collectors.toList());
 
         if (voList.isEmpty()) {
-            log.info("用户 {} 没有添加任何我喜欢的专业", userId);
+            log.info("用户 {} 没有添加任何我喜欢的课程", userId);
             return Result.success(voList);
         }
         log.info("用户 {} 共有 {} 条我喜欢记录", userId, voList.size());
@@ -385,19 +392,19 @@ public class UserServiceImpl implements UserService {
     /**
      * 验证专业是否存在
      */
-    private boolean isMajorExist(Long majorId) {
-        LambdaQueryWrapper<Major> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Major::getId, majorId);
-        return majorMapper.selectOne(queryWrapper) == null;
+    private boolean isCourseExist(Long courseId) {
+        LambdaQueryWrapper<Course> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Course::getId, courseId);
+        return courseMapper.selectOne(queryWrapper) == null;
     }
 
     /**
-     * 验证用户-专业关联记录是否存在
+     * 验证用户-课程关联记录是否存在
      */
-    private LambdaQueryWrapper<UserMajor> isUserMajorExist(Long userId, Long majorId) {
-        LambdaQueryWrapper<UserMajor> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(UserMajor::getUserId, userId)
-                .eq(UserMajor::getMajorId, majorId);
+    private LambdaQueryWrapper<UserCourse> isUserCourseExist(Long userId, Long courseId) {
+        LambdaQueryWrapper<UserCourse> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(UserCourse::getUserId, userId)
+                .eq(UserCourse::getCourseId, courseId);
         return queryWrapper;
     }
 

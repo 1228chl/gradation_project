@@ -1,33 +1,28 @@
 package com.graduationprojectordermanagementsystem.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.graduationprojectordermanagementsystem.contents.StatusContent;
 import com.graduationprojectordermanagementsystem.mapper.MajorMapper;
-import com.graduationprojectordermanagementsystem.mapper.UserMajorMapper;
 import com.graduationprojectordermanagementsystem.pojo.dto.MajorDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.Major;
-import com.graduationprojectordermanagementsystem.pojo.entity.UserMajor;
 import com.graduationprojectordermanagementsystem.pojo.vo.MajorVO;
+import com.graduationprojectordermanagementsystem.result.PageResult;
 import com.graduationprojectordermanagementsystem.service.MajorService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Service
 @Slf4j
 public class MajorServiceImpl implements MajorService {
     @Resource
     private MajorMapper majorMapper;
-    @Resource
-    private UserMajorMapper userMajorMapper;
 
     /**
      * 添加专业信息
@@ -53,49 +48,44 @@ public class MajorServiceImpl implements MajorService {
      * 查询所有专业信息
      */
     @Override
-    public List<MajorVO> getAllMajor() {
+    public PageResult<MajorVO> getMajorList(Integer pageNum, Integer pageSize) {
         log.info("开始查询所有专业信息");
-        // 1. 查询所有专业
-        List<Major> majorList = majorMapper.selectList(null);
-        log.info("共查询到 {} 条专业数据", majorList.size());
+        // 1. 创建 MP 的分页对象
+        Page<Major> page = new Page<>(pageNum, pageSize);
 
-        if (majorList.isEmpty()) {
-            return Collections.emptyList();
-        }
+        // 2. 执行分页查询（你可以加条件，如状态、用户名等）
+        LambdaQueryWrapper<Major> wrapper = new LambdaQueryWrapper<>();
+        // 示例：只查启用的专业
+        // wrapper.eq(User::getStatus, StatusContent.ENABLE);
 
-        // 2. 提取所有专业 ID
-        List<Long> majorIds = majorList.stream()
+        Page<Major> majorPage = majorMapper.selectPage(page, wrapper);
+
+        // 3. 提取专业 ID 列表，用于统计 likeCount
+        List<Long> courseIdList = majorPage.getRecords().stream()
                 .map(Major::getId)
                 .toList();
 
-        // 3. 使用 UserMajorMapper 统计每个专业的被喜欢/收藏次数
-        //    查询：user_major 表中 major_id 在 majorIds 中的记录，按 major_id 分组统计
-        List<Map<String, Object>> countResult = userMajorMapper.selectMaps(
-                new QueryWrapper<UserMajor>()
-                        .select("major_id, COUNT(*) as like_count")
-                        .in("major_id", majorIds)
-                        .groupBy("major_id")
-        );
-
-        // 4. 将结果转为 Map<majorId, likeCount>
-        Map<Long, Long> likeCountMap = new HashMap<>();
-        for (Map<String, Object> row : countResult) {
-            Long majorId = ((Number) row.get("major_id")).longValue();
-            Long count = ((Number) row.get("like_count")).longValue();
-            likeCountMap.put(majorId, count);
+        // 如果没有专业，避免后续 SQL 报错
+        if (courseIdList.isEmpty()) {
+            List<MajorVO> emptyList = new ArrayList<>();
+            return PageResult.of(majorPage.getTotal(), pageNum, pageSize, emptyList);
         }
 
-        // 5. 构造 VO：如果某个专业没有被收藏，likeCount 默认为 0
-        return majorList.stream()
-                .map(major -> new MajorVO(
-                        major.getId(),
-                        major.getMajorName(),
-                        major.getMajorCode(),
-                        major.getMajorDesc(),
-                        likeCountMap.getOrDefault(major.getId(), 0L), // 不存在则为 0
-                        major.getMajorStatus()
-                ))
-                .collect(Collectors.toList());
+        // 4. 转换实体为 VO 列表
+        List<MajorVO> voList = majorPage.getRecords().stream().map(major -> {
+            MajorVO vo = new MajorVO();
+            BeanUtils.copyProperties(major, vo);
+            // 手动处理 createTime 等字段（如果类型不匹配）
+            return vo;
+        }).toList();
+
+        // 5. 封装并返回 PageResult
+        return PageResult.of(
+                majorPage.getTotal(),    // 总数
+                (int) majorPage.getCurrent(), // 当前页
+                (int) majorPage.getSize(),    // 每页大小
+                voList                   // 数据列表
+        );
     }
 
     /**

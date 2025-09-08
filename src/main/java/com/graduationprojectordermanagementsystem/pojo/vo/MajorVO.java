@@ -14,7 +14,6 @@ public class MajorVO implements Serializable {
     private String majorName;//专业名称
     private String majorCode;//专业代码
     private String majorDesc;//专业描述
-    private Long likeCount;//喜欢数
     private Integer majorStatus;//专业状态
 
 }

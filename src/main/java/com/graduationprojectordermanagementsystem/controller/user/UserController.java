@@ -5,7 +5,7 @@ import com.graduationprojectordermanagementsystem.pojo.dto.LoginDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.RegisterDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.User;
 import com.graduationprojectordermanagementsystem.pojo.vo.LoginVO;
-import com.graduationprojectordermanagementsystem.pojo.vo.UserMajorVO;
+import com.graduationprojectordermanagementsystem.pojo.vo.UserCourseVO;
 import com.graduationprojectordermanagementsystem.pojo.vo.UserVO;
 import com.graduationprojectordermanagementsystem.result.Result;
 import com.graduationprojectordermanagementsystem.service.UserService;
@@ -127,10 +127,10 @@ public class UserController {
      */
     @Operation(summary = "我喜欢功能(添加)")
     @RequireAnyRole({"user","admin"})
-    @PostMapping("/like/{majorId}")
-    public Result<String> like(@PathVariable Long majorId){
+    @PostMapping("/like/{courseId}")
+    public Result<String> like(@PathVariable Long courseId){
         Long userId = UserContext.getUserId();
-        return userService.addUserMajor(userId,majorId);
+        return userService.addUserCourse(userId,courseId);
     }
 
     /**
@@ -138,10 +138,10 @@ public class UserController {
      */
     @Operation(summary = "我喜欢功能(取消)")
     @RequireAnyRole({"user","admin"})
-    @DeleteMapping("/like/{majorId}")
-    public Result<String> unlike(@PathVariable Long majorId){
+    @DeleteMapping("/like/{courseId}")
+    public Result<String> unlike(@PathVariable Long courseId){
         Long userId = UserContext.getUserId();
-        return userService.deleteUserMajor(userId,majorId);
+        return userService.deleteUserCourse(userId,courseId);
     }
 
     /**
@@ -150,9 +150,9 @@ public class UserController {
     @Operation(summary = "通过用户ID查询‘我喜欢’的专业列表")
     @RequireAnyRole({"user", "admin"})
     @GetMapping("/like")
-    public Result<List<UserMajorVO>> getLikeMajorList() {
+    public Result<List<UserCourseVO>> getLikeCourseList() {
         Long userId = UserContext.getUserId();
-        return userService.getLikeMajorList(userId);
+        return userService.getLikeCourseList(userId);
     }
 
 
