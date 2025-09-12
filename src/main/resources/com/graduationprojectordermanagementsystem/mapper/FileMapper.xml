@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.graduationprojectordermanagementsystem.mapper.FileMapper">
-    <select id="selectByUuid" resultType="com.graduationprojectordermanagementsystem.pojo.entity.UploadFile">
+    <delete id="deleteByFileUuid" parameterType="java.lang.String">
+        DELETE FROM upload_file WHERE file_uuid = #{fileUuid}
+    </delete>
+    <select id="selectByFileUuid" resultType="com.graduationprojectordermanagementsystem.pojo.entity.UploadFile"
+            parameterType="java.lang.String">
         SELECT * FROM upload_file WHERE file_uuid = #{fileUuid}
     </select>
 </mapper>

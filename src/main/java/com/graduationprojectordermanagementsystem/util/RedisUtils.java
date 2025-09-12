@@ -90,12 +90,5 @@ public class RedisUtils {
     public boolean isInBlacklist(String jti) {
         return Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_PREFIX + jti));// 判断缓存是否存在
     }
-
-    /**
-     * 立即从黑名单移除（可用于管理员强制恢复 Token，一般不用）
-     */
-    public void removeFromBlacklist(String jti){
-        redisTemplate.delete(BLACKLIST_PREFIX + jti);// 删除缓存
-    }
 }
 

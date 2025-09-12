@@ -9,8 +9,6 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 
 
-import java.io.IOException;
-
 @Aspect
 @Component
 public class AnyRoleCheckAspect {
@@ -20,7 +18,7 @@ public class AnyRoleCheckAspect {
     public void requireAnyRolePointcut(RequireAnyRole requireAnyRole) {}
 
     @Before(value = "requireAnyRolePointcut(requireAnyRole)", argNames = "requireAnyRole")
-    public void checkRole(RequireAnyRole requireAnyRole) throws IOException{
+    public void checkRole(RequireAnyRole requireAnyRole) {
         String[] allowedRoles = requireAnyRole.value();// 获取注解中指定的角色
         String userRole = UserContext.getRole();// 获取当前用户角色
 

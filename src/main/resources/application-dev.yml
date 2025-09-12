@@ -69,10 +69,9 @@ debug: true
 # 文件上传配置
 file:
   base-url: http://106.52.6.93:8080
-  upload-dir: G:file/uploads  # Linux 系统路径，Windows 可写 C:/uploads
-  upload-avatar-dir: G:file/avatar
+  upload-dir: G:/file/uploads  # Linux 系统路径，Windows 可写 C:/uploads
+  upload-avatar-dir: G:/file/avatar
 
 jwt:
   secret: 7JWI64WV7ZWY7IS47JqUIOyggOuKlCDsp4DquIggand0IOqzteu2gOykkeyeheuL
   expire-time: 7200
-

@@ -1,8 +1,10 @@
 package com.graduationprojectordermanagementsystem.controller.user;
 
 import com.graduationprojectordermanagementsystem.annotation.RequireAnyRole;
+import com.graduationprojectordermanagementsystem.contents.CommonContent;
 import com.graduationprojectordermanagementsystem.pojo.dto.LoginDTO;
 import com.graduationprojectordermanagementsystem.pojo.dto.RegisterDTO;
+import com.graduationprojectordermanagementsystem.pojo.dto.UserDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.User;
 import com.graduationprojectordermanagementsystem.pojo.vo.LoginVO;
 import com.graduationprojectordermanagementsystem.pojo.vo.UserCourseVO;
@@ -62,8 +64,7 @@ public class UserController {
 
         //缓存jwt令牌
         redisUtils.setCache(user.getUsername(), newToken);
-
-        return Result.success(new LoginVO(user.getId(), user.getUsername(), newToken));
+        return Result.success(CommonContent.LoginSuccess, new LoginVO(user.getId(), user.getUsername(), newToken));
     }
 
     /**
@@ -89,12 +90,12 @@ public class UserController {
 
         // 1. 如果没有 Token，也算登出成功
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return Result.success();
+            return Result.success(CommonContent.LogoutSuccess);
         }
 
         String token = authHeader.substring(7);
         if (token.isEmpty()) {
-            return Result.success();
+            return Result.success(CommonContent.LogoutSuccess);
         }
 
         // 2. 解析 jti 并加入黑名单
@@ -106,10 +107,22 @@ public class UserController {
             }
         } catch (Exception e) {
             log.warn("登出时解析Token失败: {}", e.getMessage());
+            return Result.success(CommonContent.LogoutSuccess);
             // 解析失败也返回成功，不影响用户体验
         }
 
-        return Result.success("登出成功");
+        return Result.success(CommonContent.LogoutSuccess);
+    }
+
+    @Operation(summary = "修改用户信息")
+    @PutMapping
+    @RequireAnyRole({"user","admin"})
+    public Result<String> updateUser(@Valid @RequestBody UserDTO userDTO){
+        log.info("修改用户信息：{}", userDTO);
+        if (userService.updateUser(userDTO)){
+            return Result.success(CommonContent.UpdateUserInfoSuccess);
+        }
+        return Result.error(CommonContent.UpdateUserInfoFailed);
     }
 
     /**
@@ -154,6 +167,8 @@ public class UserController {
         Long userId = UserContext.getUserId();
         return userService.getLikeCourseList(userId);
     }
+
+
 
 
 }

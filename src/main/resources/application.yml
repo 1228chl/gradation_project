@@ -1,6 +1,6 @@
 # application.yml
 spring:
   profiles:
-    active: prod   # 或 dev
+    active: prod
 #    active: dev
 

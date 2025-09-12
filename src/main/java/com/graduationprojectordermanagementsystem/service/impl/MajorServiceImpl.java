@@ -4,11 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.graduationprojectordermanagementsystem.contents.StatusContent;
+import com.graduationprojectordermanagementsystem.exception.BaseException;
 import com.graduationprojectordermanagementsystem.mapper.MajorMapper;
 import com.graduationprojectordermanagementsystem.pojo.dto.MajorDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.Major;
 import com.graduationprojectordermanagementsystem.pojo.vo.MajorVO;
 import com.graduationprojectordermanagementsystem.result.PageResult;
+import com.graduationprojectordermanagementsystem.result.ResultCode;
 import com.graduationprojectordermanagementsystem.service.MajorService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -100,7 +102,7 @@ public class MajorServiceImpl implements MajorService {
         Major major = majorMapper.selectById(id);
         if (major == null) {
             log.warn("修改专业失败，专业不存在，ID：{}", id);
-            throw new IllegalArgumentException("专业不存在");
+            throw new BaseException(ResultCode.VALIDATE_FAILED ,"专业不存在");
         }
 
         return majorMapper.update(null,
@@ -120,14 +122,14 @@ public class MajorServiceImpl implements MajorService {
         // 1. 参数校验
         if (id == null || id <= 0) {
             log.warn("删除专业失败，非法ID：{}", id);
-            throw new IllegalArgumentException("专业ID不能为空且必须大于0");
+            throw new BaseException(ResultCode.VALIDATE_FAILED,"专业ID不能为空且必须大于0");
         }
 
         // 2. 检查专业是否存在
         Major major = majorMapper.selectById(id);
         if (major == null) {
             log.warn("删除专业失败，专业不存在，ID：{}", id);
-            throw new IllegalArgumentException("专业不存在");
+            throw new BaseException(ResultCode.VALIDATE_FAILED,"专业不存在");
         }
 
         // 4. 执行删除
@@ -142,7 +144,7 @@ public class MajorServiceImpl implements MajorService {
             }
         } catch (Exception e) {
             log.error("删除专业时发生异常，ID：{}", id, e);
-            throw new RuntimeException("删除专业失败", e);
+            throw new BaseException("删除专业失败");
         }
     }
 }

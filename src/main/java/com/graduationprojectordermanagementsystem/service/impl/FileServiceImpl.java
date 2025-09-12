@@ -1,9 +1,12 @@
 package com.graduationprojectordermanagementsystem.service.impl;
 
 import com.graduationprojectordermanagementsystem.contents.StatusContent;
+import com.graduationprojectordermanagementsystem.exception.BaseException;
 import com.graduationprojectordermanagementsystem.exception.UploadFileEmptyException;
 import com.graduationprojectordermanagementsystem.mapper.FileMapper;
+import com.graduationprojectordermanagementsystem.pojo.dto.FileDTO;
 import com.graduationprojectordermanagementsystem.pojo.entity.UploadFile;
+import com.graduationprojectordermanagementsystem.result.ResultCode;
 import com.graduationprojectordermanagementsystem.service.FileService;
 import com.graduationprojectordermanagementsystem.util.UserContext;
 import jakarta.annotation.Resource;
@@ -55,42 +58,32 @@ public class FileServiceImpl implements FileService {
         // 2. 获取当前用户
         String username = UserContext.getUsername();
         if (username == null) {
-            throw new RuntimeException("用户未登录，无法上传文件");
+            throw new BaseException(ResultCode.UNAUTHORIZED ,"用户未登录，无法上传文件");
         }
+
 
         // 3. 创建上传目录
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
+        FileDTO f = uploadFileCore(uploadDir, originalFilename);
 
-        // 4. 生成唯一文件名
-        String fileExtension = "";
-        int lastDotIndex = originalFilename.lastIndexOf(".");// 获取文件扩展名
-        if (lastDotIndex > 0) {
-            fileExtension = originalFilename.substring(lastDotIndex);
-        }
-        String uniqueFileName = UUID.randomUUID() + fileExtension;
-        Path finalFilePath = uploadPath.resolve(uniqueFileName);
 
         // 5. 直接将文件写入正式目录
         try {
-            file.transferTo(finalFilePath.toFile());
-            log.info("✅ 文件已保存到正式目录: {}", finalFilePath);
+            file.transferTo(f.getFinalFilePath().toFile());
+            log.info("✅ 文件已保存到正式目录: {}", f.getFinalFilePath());
         } catch (IOException e) {
             log.error("文件保存到磁盘失败", e);
-            throw new IOException("文件保存失败，请检查磁盘路径或权限", e);
+            throw new BaseException("文件保存失败，请检查磁盘路径或权限");
         }
 
         // 6. 构建数据库实体并插入
         UploadFile uploadFile = new UploadFile();
         uploadFile.setFileName(originalFilename);
-        uploadFile.setFileUuid(uniqueFileName);
-        uploadFile.setFilePath(finalFilePath.toString());
+        uploadFile.setFileUuid(f.getUniqueFileName());
+        uploadFile.setFilePath(f.getFinalFilePath().toString());
         uploadFile.setFileType(file.getContentType());
         uploadFile.setFileSize(file.getSize());
         uploadFile.setFileOrAvatar(StatusContent.FILE);
-        String fileWebPath = "/uploads/" + uniqueFileName;
+        String fileWebPath = "/api/file/download/" + f.getUniqueFileName();
         String fileUrl = UriComponentsBuilder
                 .fromHttpUrl(baseUrl)
                 .path(fileWebPath)
@@ -106,15 +99,15 @@ public class FileServiceImpl implements FileService {
         } catch (Exception e) {
             log.error("数据库插入失败，尝试删除已写入的文件", e);
             try {
-                Files.deleteIfExists(finalFilePath);
+                Files.deleteIfExists(f.getFinalFilePath());
             } catch (IOException ioException) {
-                log.error("无法清理已生成的文件: {}", finalFilePath, ioException);
+                log.error("无法清理已生成的文件: {}", f.getFinalFilePath(), ioException);
             }
             throw e; // 重新抛出异常
         }
 
-        log.info("✅ 文件记录已保存至数据库，文件ID: {}, 用户: {}", uploadFile.getId(), username);
-        log.info("🎉 文件上传成功，文件名: {}", originalFilename);
+        log.info("✅文件记录已保存至数据库，文件ID: {}, 用户: {}", uploadFile.getId(), username);
+        log.info("🎉文件上传成功，文件名: {}", originalFilename);
 
         return uploadFile;
     }
@@ -136,42 +129,30 @@ public class FileServiceImpl implements FileService {
         // 2. 获取当前用户
         String username = UserContext.getUsername();
         if (username == null) {
-            throw new RuntimeException("用户未登录，无法上传头像");
+            throw new BaseException(ResultCode.UNAUTHORIZED ,"用户未登录，无法上传头像");
         }
 
         // 3. 创建上传目录
-        Path uploadPath = Paths.get(uploadAvatarDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        // 4. 生成唯一文件名
-        String fileExtension = "";
-        int lastDotIndex = originalFilename.lastIndexOf(".");
-        if (lastDotIndex > 0) {
-            fileExtension = originalFilename.substring(lastDotIndex);
-        }
-        String uniqueFileName = UUID.randomUUID() + fileExtension;
-        Path finalFilePath = uploadPath.resolve(uniqueFileName);
+        FileDTO f = uploadFileCore(uploadAvatarDir, originalFilename);
 
         // 5. 直接将文件写入正式目录
         try {
-            file.transferTo(finalFilePath.toFile());
-            log.info("✅ 头像已保存到正式目录: {}", finalFilePath);
+            file.transferTo(f.getFinalFilePath().toFile());
+            log.info("✅ 头像已保存到正式目录: {}", f.getFinalFilePath());
         } catch (IOException e) {
             log.error("头像保存到磁盘失败", e);
-            throw new IOException("头像保存失败，请检查磁盘路径或权限", e);
+            throw new BaseException("头像保存失败，请检查磁盘路径或权限");
         }
 
         // 6. 构建数据库实体并插入
         UploadFile uploadFile = new UploadFile();
         uploadFile.setFileName(originalFilename);
-        uploadFile.setFileUuid(uniqueFileName);
-        uploadFile.setFilePath(finalFilePath.toString());
+        uploadFile.setFileUuid(f.getUniqueFileName());
+        uploadFile.setFilePath(f.getFinalFilePath().toString());
         uploadFile.setFileType(file.getContentType());
         uploadFile.setFileSize(file.getSize());
         uploadFile.setFileOrAvatar(StatusContent.AVATAR);
-        String avatarWebPath = "/avatar/" + uniqueFileName;// 头像路径
+        String avatarWebPath = "/avatars/" + f.getUniqueFileName();// 头像路径
         String fileUrl = UriComponentsBuilder
                 .fromHttpUrl(baseUrl)
                 .path(avatarWebPath)
@@ -187,9 +168,9 @@ public class FileServiceImpl implements FileService {
         } catch (Exception e) {
             log.error("数据库插入失败，尝试删除已写入的头像", e);
             try {
-                Files.deleteIfExists(finalFilePath);
+                Files.deleteIfExists(f.getFinalFilePath());
             } catch (IOException ioException) {
-                log.error("无法清理已生成的头像: " + finalFilePath, ioException);
+                log.error("无法清理已生成的头像: {}", f.getFinalFilePath(), ioException);
             }
             throw e; // 重新抛出异常
         }
@@ -201,8 +182,33 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public UploadFile selectByUuid(String fileUuid) {
-        return fileMapper.selectByUuid(fileUuid);
+    public UploadFile selectByFileUuid(String fileUuid) {
+        return fileMapper.selectByFileUuid(fileUuid);
+    }
+
+    private FileDTO uploadFileCore(String uploadDir, String originalFilename) throws IOException {
+        FileDTO fileDTO = new FileDTO();
+        // 3. 创建上传目录
+        Path uploadPath = Paths.get(uploadDir);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        // 4. 生成唯一文件名
+        String fileExtension = "";
+        int lastDotIndex = originalFilename.lastIndexOf(".");// 获取文件扩展名
+        if (lastDotIndex > 0) {
+            fileExtension = originalFilename.substring(lastDotIndex);
+        }
+        String uniqueFileName = UUID.randomUUID() + fileExtension;
+        Path finalFilePath = uploadPath.resolve(uniqueFileName);
+
+        fileDTO.setUploadPath(uploadPath);
+        fileDTO.setUniqueFileName(uniqueFileName);
+        fileDTO.setFinalFilePath(finalFilePath);
+        fileDTO.setFileExtension(fileExtension);
+
+        return fileDTO;
     }
 
 }

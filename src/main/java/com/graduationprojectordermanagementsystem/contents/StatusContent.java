@@ -14,14 +14,11 @@ public class StatusContent {
     //未支付
     public static final Integer UNPAID = 0;
 
-    //已支付
-    public static final Integer PAID = 1;
+    //已支付public static final Integer PAID = 1;
 
-    //已完成
-    public static final Integer COMPLETED = 2;
+    //已完成public static final Integer COMPLETED = 2;
 
-    //已取消
-    public static final Integer CANCELED = 3;
+    //已取消public static final Integer CANCELED = 3;
 
     //文件
     public static final Integer FILE = 0;

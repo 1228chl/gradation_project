@@ -17,7 +17,9 @@ import com.graduationprojectordermanagementsystem.pojo.vo.UserCourseVO;
 import com.graduationprojectordermanagementsystem.pojo.vo.UserVO;
 import com.graduationprojectordermanagementsystem.result.PageResult;
 import com.graduationprojectordermanagementsystem.result.Result;
+import com.graduationprojectordermanagementsystem.result.ResultCode;
 import com.graduationprojectordermanagementsystem.service.UserService;
+import com.graduationprojectordermanagementsystem.util.UserContext;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -39,6 +41,8 @@ public class UserServiceImpl implements UserService {
     private UserCourseMapper userCourseMapper;
     @Resource
     private CourseMapper courseMapper;
+    @Resource
+    private FileMapper fileMapper;
 
 
 
@@ -56,21 +60,26 @@ public class UserServiceImpl implements UserService {
         //2.处理各种异常情况（用户名不存在、密码不对、账号被禁用）
         if (user == null){
             //用户名或邮箱不存在
+            log.warn("登录失败：账号或邮箱不存在，account={}", account);
             throw new AccountAndEmailNotFoundException(CommonContent.UserAndEmailNotExist);
         }
         // 3. 验证密码
         if (!BCrypt.checkpw(loginDTO.getPassword(), user.getPassword())){
             //密码错误
+            log.warn("登录失败：密码错误，account={}", account);
             throw new PasswordErrorException(CommonContent.PasswordError);
         }
         // 4. 检查账号状态
         if(user.getStatus().equals(StatusContent.DISABLE)){
             //账号被禁用
+            log.warn("登录失败：账号被禁用，account={}", account);
             throw new AccountLockedException(CommonContent.AccountLocked);
         }
+        // ✅ 标记需要更新登录时间（后续由 AOP 或事件机制处理）
+        log.info("用户登录成功，userId={}", user.getId());
 
         //5.更新数据库中的登录时间
-        log.info("更新用户最后登录时间");
+        log.info("更新用户最后登录时间{}", LocalDateTime.now());
         userMapper.update(null,new UpdateWrapper<User>()
                 .eq("id",user.getId())
                 .set("last_login_time", LocalDateTime.now()));
@@ -86,10 +95,10 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.findOneByUsernameOrEmail(registerDTO.getUsername(), registerDTO.getEmail());
         if (user != null) {
             if (user.getUsername().equals(registerDTO.getUsername())) {
-                return CommonContent.UsernameAlreadyRegistered;
+                throw new BaseException(CommonContent.UsernameAlreadyRegistered);
             }
             if (user.getEmail() != null && user.getEmail().equals(registerDTO.getEmail())) {
-                return CommonContent.EmailAlreadyRegistered;
+                throw new BaseException(CommonContent.EmailAlreadyRegistered);
             }
         }
         //2.将用户信息插入数据库
@@ -110,6 +119,10 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserVO getUserInfo(String username) {
+        log.info("获取用户信息，username={}", username);
+        if (username == null) {
+            throw new BaseException(ResultCode.VALIDATE_FAILED ,"用户名不能为空");
+        }
         User user = userMapper.getUserByUsername(username);
         return new UserVO(
                 user.getId(),
@@ -207,21 +220,31 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    /**
+     * 修改用户信息
+     */
     @Override
     public boolean updateUser(UserDTO userDTO) {
         log.info("开始修改用户信息：{}", userDTO);
         // 1. 校验参数
         if (userDTO == null || userDTO.getId() == null || userDTO.getId() <= 0) {
             log.warn("更新用户失败，用户ID无效：{}", userDTO);
-            throw new IllegalArgumentException("用户ID不能为空且必须大于0");
+            throw new BaseException("用户ID不能为空且必须大于0");
         }
 
         // 2. 查询原用户是否存在
         User existingUser = userMapper.selectById(userDTO.getId());
         if (existingUser == null) {
             log.warn("更新用户失败，用户不存在，ID：{}", userDTO.getId());
-            throw new IllegalArgumentException("用户不存在");
+            throw new BaseException("用户不存在");
         }
+
+        // 3. 获取当前登录用户信息
+        String currentRole = UserContext.getRole();
+        Long currentUserId = UserContext.getUserId();
+
+        boolean isAdmin = RoleContent.ADMIN.equals(currentRole);
+        log.info("当前用户ID：{}，角色：{}，尝试修改用户ID：{}", currentUserId, currentRole, userDTO.getId());
 
         // 3. 构建要更新的 User 实体（只设置非 null 字段）
         User user = new User();
@@ -239,18 +262,57 @@ public class UserServiceImpl implements UserService {
         }
         if (userDTO.getAvatar() != null) {
             user.setAvatar(userDTO.getAvatar());
-        }
-        if (userDTO.getStatus() != null) {
-            user.setStatus(userDTO.getStatus());
-        }
-        if (userDTO.getRole() != null) {
-            user.setRole(userDTO.getRole());
+            log.info("头像已更新，用户ID：{}", userDTO.getId());
+            String oldAvatar = existingUser.getAvatar();
+            if (oldAvatar != null && !oldAvatar.equals(user.getAvatar())) {
+                UploadFile oldFile = fileMapper.selectByFileUuid(oldAvatar);
+                if (oldFile != null) {
+                    // 可选：删除物理文件（本地 or OSS）
+                    // fileStorageService.deleteFile(oldFile.getFilePath());
+
+                    // 删除数据库记录
+                    int deleteCount = fileMapper.deleteByFileUuid(oldAvatar);
+                    if (deleteCount > 0) {
+                        log.info("已删除旧头像文件记录，文件名：{}", oldAvatar);
+                    } else {
+                        log.warn("删除旧头像文件记录失败（可能已被删除），文件名：{}", oldAvatar);
+                    }
+                } else {
+                    log.warn("未找到旧头像对应的 uploadFile 记录，文件名：{}", oldAvatar);
+                }
+            }else {
+                log.info("旧头像为空或与新头像相同，无需删除：{}", oldAvatar);
+            }
         }
 
         // 🔐 密码特殊处理：如果传了新密码，才加密并设置
         if (userDTO.getPassword() != null && !userDTO.getPassword().trim().isEmpty()) {
             user.setPassword(BCrypt.hashpw(userDTO.getPassword(), BCrypt.gensalt(12)));
             log.info("密码已加密，用户ID：{}", userDTO.getId());
+        }
+
+        // ⚠️ 敏感字段：只有管理员可以修改
+        if (isAdmin) {
+            if (userDTO.getRole() != null) {
+                user.setRole(userDTO.getRole());
+            }
+            if (userDTO.getStatus() != null) {
+                user.setStatus(userDTO.getStatus());
+            }
+        } else {
+            // 普通用户：只能修改自己的信息
+            if (!currentUserId.equals(userDTO.getId())) {
+                log.warn("越权操作：用户 {} 尝试修改用户 {}", currentUserId, userDTO.getId());
+                throw new BaseException(ResultCode.FORBIDDEN ,"不允许越权操作");
+            }
+
+            // 普通用户不能修改 role 和 status
+            if (userDTO.getRole() != null || userDTO.getStatus() != null) {
+                log.warn("普通用户 {} 尝试修改受限字段：role={}, status={}",
+                        currentUserId, userDTO.getRole(), userDTO.getStatus());
+                throw new BaseException(ResultCode.FORBIDDEN,"无法修改角色或状态");
+            }
+            // 不设置 role 和 status
         }
 
         // 4. 执行更新
@@ -277,16 +339,16 @@ public class UserServiceImpl implements UserService {
 
         // 参数校验
         if (userId == null || courseId == null) {
-            return Result.error("用户ID或课程ID不能为空");
+            return Result.error(ResultCode.VALIDATE_FAILED ,"用户ID或课程ID不能为空");
         }
 
         // 查询用户是否存在（防止攻击）
         if (isUserExist(userId)) {
-            return Result.error("用户不存在");
+            return Result.error(ResultCode.VALIDATE_FAILED ,"用户不存在");
         }
         // 验证专业是否存在（防止攻击）
         if (isCourseExist(courseId)) {
-            return Result.error("课程不存在");
+            return Result.error(ResultCode.VALIDATE_FAILED ,"课程不存在");
         }
 
         // 查询是否已存在（防止重复添加）
@@ -317,16 +379,16 @@ public class UserServiceImpl implements UserService {
     public Result<String> deleteUserCourse(Long userId, Long courseId) {
         log.info("取消我喜欢功能，用户id {}，课程id {}", userId, courseId);
         if (courseId == null) {
-            return Result.error("课程ID不能为空");
+            return Result.error(ResultCode.VALIDATE_FAILED ,"课程ID不能为空");
         }
         // 查询用户是否存在（防止攻击）
 
         if (isUserExist(userId)) {
-            return Result.error("用户不存在");
+            return Result.error(ResultCode.VALIDATE_FAILED ,"用户不存在");
         }
         // 验证专业是否存在（防止攻击）
         if (isCourseExist(courseId)) {
-            return Result.error("课程不存在");
+            return Result.error(ResultCode.VALIDATE_FAILED ,"课程不存在");
         }
         // 查询是否不存在（防止重复添加）
         LambdaQueryWrapper<UserCourse> queryWrapperUserCourse = isUserCourseExist(userId, courseId);
@@ -351,7 +413,7 @@ public class UserServiceImpl implements UserService {
 
         // 1. 可选：验证用户是否存在
         if (isUserExist(userId)) {
-            return Result.error("用户不存在");
+            return Result.error(ResultCode.VALIDATE_FAILED ,"用户不存在");
         }
 
         // 2. 查询用户喜欢的专业关联记录

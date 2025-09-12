@@ -48,7 +48,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry  registry){
         registry.addMapping("/api/**")// 拦截所有请求
-                .allowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*")// 允许跨域的域名
+                .allowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*", "http://106.52.6.93:*")// 允许跨域的域名
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")// 允许的请求方法
                 .allowedHeaders("*")// 允许的请求头
                 .exposedHeaders("Authorization","X-Total-Count")// 允许的响应头

@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.graduationprojectordermanagementsystem.pojo.entity.UploadFile;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -16,5 +15,7 @@ public interface FileMapper extends BaseMapper<UploadFile> {
     @Select("SELECT file_path FROM upload_file")
     List<String> findAllFilepaths();
 
-    UploadFile selectByUuid(@Param("fileUuid") String uuid);
+    int deleteByFileUuid(String oldAvatar);
+
+    UploadFile selectByFileUuid(String oldAvatar);
 }

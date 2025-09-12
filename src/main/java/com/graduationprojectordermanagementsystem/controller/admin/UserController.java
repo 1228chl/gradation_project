@@ -45,7 +45,7 @@ public class UserController {
     }
 
     @Operation(summary = "修改用户信息")
-    @PutMapping
+    @PutMapping("")
     @RequireAnyRole({"admin"})
     public Result<String> updateUser(@Valid @RequestBody UserDTO userDTO){
         log.info("修改用户信息：{}", userDTO);

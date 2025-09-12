@@ -69,7 +69,7 @@ public class JwtAuthenticationInterceptor implements HandlerInterceptor {
             Claims claims = jwtUtils.validateToken(token);
 
             //5.提取用户信息，存入上下文中
-            String username = claims.getSubject();
+            String username = jwtUtils.getUsernameFromToken(token);
             String role = claims.get("role", String.class);//获取角色
             Long userId = claims.get("userId", Long.class);
             if (username == null && role == null){

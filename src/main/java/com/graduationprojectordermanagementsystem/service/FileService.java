@@ -10,5 +10,5 @@ public interface FileService {
 
     UploadFile uploadAvatar(MultipartFile file) throws IOException;
 
-    UploadFile selectByUuid(String fileUuid);
+    UploadFile selectByFileUuid(String fileUuid);
 }

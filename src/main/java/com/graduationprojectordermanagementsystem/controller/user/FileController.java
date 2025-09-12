@@ -45,14 +45,14 @@ public class FileController {
     @RequireAnyRole({"user","admin"})
     @PostMapping("/upload")
     @Operation(summary = "文件上传")
-    public Result<UploadFileVO> uploadFile(MultipartFile file) {
+    public Result<UploadFileVO> uploadFile(@RequestParam("file") MultipartFile file) {
         try {
             UploadFile uploadFile = fileService.uploadFile(file);
             UploadFileVO uploadFileVO = new UploadFileVO(
                     uploadFile.getId(),
                     uploadFile.getFileName(),
                     uploadFile.getFileUuid(),
-                    uploadFile.getFilePath(),
+                    uploadFile.getFileUrl(),
                     uploadFile.getFileType(),
                     uploadFile.getFileSize());
 
@@ -69,14 +69,14 @@ public class FileController {
     @RequireAnyRole({"user","admin"})
     @PostMapping("/upload/avatar")
     @Operation(summary = "头像上传")
-    public Result<UploadFileVO> uploadAvatar(MultipartFile file) {
+    public Result<UploadFileVO> uploadAvatar(@RequestParam("file") MultipartFile file) {
         try {
             UploadFile uploadFile = fileService.uploadAvatar(file);
             UploadFileVO uploadFileVO = new UploadFileVO(
                     uploadFile.getId(),
                     uploadFile.getFileName(),
                     uploadFile.getFileUuid(),
-                    uploadFile.getFilePath(),
+                    uploadFile.getFileUrl(),
                     uploadFile.getFileType(),
                     uploadFile.getFileSize());
 
@@ -111,7 +111,7 @@ public class FileController {
      * 内部方法，用于处理文件预览和下载
      */
     private void viewFileInternal(String fileUuid, HttpServletResponse response, boolean asDownload) throws IOException {
-        UploadFile file = fileService.selectByUuid(fileUuid);
+        UploadFile file = fileService.selectByFileUuid(fileUuid);
         if (file == null) {
             response.setStatus(404);
             response.getWriter().write("文件不存在");

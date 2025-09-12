@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.graduationprojectordermanagementsystem.contents.StatusContent;
+import com.graduationprojectordermanagementsystem.exception.BaseException;
 import com.graduationprojectordermanagementsystem.mapper.CourseMapper;
 import com.graduationprojectordermanagementsystem.mapper.UserCourseMapper;
 import com.graduationprojectordermanagementsystem.pojo.dto.CourseDTO;
@@ -12,6 +13,7 @@ import com.graduationprojectordermanagementsystem.pojo.entity.Course;
 import com.graduationprojectordermanagementsystem.pojo.entity.UserCourse;
 import com.graduationprojectordermanagementsystem.pojo.vo.CourseVO;
 import com.graduationprojectordermanagementsystem.result.PageResult;
+import com.graduationprojectordermanagementsystem.result.ResultCode;
 import com.graduationprojectordermanagementsystem.service.CourseService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +67,7 @@ public class CourseServiceImpl implements CourseService {
         Course course = courseMapper.selectById(id);
         if (course == null) {
             log.warn("修改课程失败，课程不存在，ID：{}", id);
-            throw new IllegalArgumentException("课程不存在");
+            throw new BaseException(ResultCode.VALIDATE_FAILED ,"课程不存在");
         }
 
         return courseMapper.update(null,
@@ -85,14 +87,14 @@ public class CourseServiceImpl implements CourseService {
         // 1. 参数校验
         if (id == null || id <= 0) {
             log.warn("删除课程失败，非法ID：{}", id);
-            throw new IllegalArgumentException("课程ID不能为空且必须大于0");
+            throw new BaseException(ResultCode.VALIDATE_FAILED,"课程ID不能为空且必须大于0");
         }
 
         // 2. 检查专业是否存在
         Course course = courseMapper.selectById(id);
         if (course == null) {
             log.warn("删除课程失败，课程不存在，ID：{}", id);
-            throw new IllegalArgumentException("课程不存在");
+            throw new BaseException(ResultCode.VALIDATE_FAILED,"课程不存在");
         }
 
         // 4. 执行删除
@@ -107,7 +109,7 @@ public class CourseServiceImpl implements CourseService {
             }
         } catch (Exception e) {
             log.error("删除课程时发生异常，ID：{}", id, e);
-            throw new RuntimeException("删除课程失败", e);
+            throw new BaseException("删除课程失败");
         }
     }
 

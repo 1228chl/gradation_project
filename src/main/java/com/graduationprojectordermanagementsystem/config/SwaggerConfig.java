@@ -26,7 +26,8 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("user")
                 .pathsToMatch("/api/user/**",
-                        "/api/file/**") // 匹配控制器中定义的接口路径
+                        "/api/file/**",
+                        "/api/common/**") // 匹配控制器中定义的接口路径
                 .packagesToScan("com.graduationprojectordermanagementsystem.controller.user")
                 .build();
     }
